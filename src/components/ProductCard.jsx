@@ -1,7 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, memo, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, ChevronDown, Check, Home } from 'lucide-react'
 import { mockSurfaces } from '../data/mockData'
+
+// Pre-compute filtered data once at module level (static data)
+const dreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
+const rooms = mockSurfaces.filter((s) => s.type === 'room')
 
 // House icon for rooms
 function RoomIcon({ size = 16 }) {
@@ -13,52 +17,66 @@ function RoomIcon({ size = 16 }) {
   )
 }
 
-export default function ProductCard({ product, showInfo }) {
-  const { id, title, gradient, aspectRatio, retailer } = product
+export default memo(function ProductCard({ product, showInfo }) {
+  const { id, title, gradient, image, aspectRatio, retailer, price } = product
   const [showPanel, setShowPanel] = useState(false)
   const [addedToIds, setAddedToIds] = useState(new Set())
   const [addedToRoomId, setAddedToRoomId] = useState(null)
   const [profileAdded, setProfileAdded] = useState(false)
   const panelRef = useRef(null)
 
-  const dreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
-  const rooms = mockSurfaces.filter((s) => s.type === 'room')
-
   useEffect(() => {
+    if (!showPanel) return
     function handleClick(e) {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
         setShowPanel(false)
       }
     }
-    if (showPanel) {
-      document.addEventListener('mousedown', handleClick)
-      return () => document.removeEventListener('mousedown', handleClick)
-    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
   }, [showPanel])
 
-  function toggleDreamboard(sid) {
+  const toggleDreamboard = useCallback((sid) => {
     setAddedToIds((prev) => {
       const next = new Set(prev)
       if (next.has(sid)) next.delete(sid)
       else next.add(sid)
       return next
     })
-  }
+  }, [])
 
-  function toggleRoom(sid) {
-    setAddedToRoomId(addedToRoomId === sid ? null : sid)
-  }
+  const toggleRoom = useCallback((sid) => {
+    setAddedToRoomId((prev) => prev === sid ? null : sid)
+  }, [])
+
+  // Stable style object for aspect ratio
+  const imageStyle = useMemo(() => ({
+    aspectRatio: aspectRatio || '1/1',
+  }), [aspectRatio])
+
+  const gradientStyle = useMemo(() => ({
+    background: gradient,
+    aspectRatio: aspectRatio || '1/1',
+  }), [gradient, aspectRatio])
 
   return (
     <Link to={`/product/${id}`} className="group block mb-[16px] break-inside-avoid">
       <div className="relative rounded-[4px] overflow-hidden">
-        <div
-          className="w-full"
-          style={{
-            background: gradient,
-            aspectRatio: aspectRatio || '1/1',
-          }}
-        />
+        {image ? (
+          <img
+            src={image}
+            alt={title}
+            className="w-full object-cover"
+            style={imageStyle}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div
+            className="w-full"
+            style={gradientStyle}
+          />
+        )}
 
         {/* Hover: connect button (top-right) */}
         <button
@@ -71,6 +89,15 @@ export default function ProductCard({ product, showInfo }) {
         >
           <Plus size={16} strokeWidth={2} className="text-[#1A1A1A]" />
         </button>
+
+        {/* Price bubble */}
+        {price && (
+          <div className="absolute bottom-2 left-2 bg-[#1A1A1A]/50 backdrop-blur-sm rounded-[8px] px-2.5 py-1 z-10">
+            <span className="text-white text-[13px] font-medium">
+              ${price.toLocaleString()}
+            </span>
+          </div>
+        )}
 
         {/* ── Add-to picker panel ── */}
         {showPanel && (
@@ -218,4 +245,4 @@ export default function ProductCard({ product, showInfo }) {
       )}
     </Link>
   )
-}
+})

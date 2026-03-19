@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronDown, Plus, MoreHorizontal, ArrowUp, Check } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import { mockProducts } from '../data/mockData'
@@ -12,6 +12,9 @@ const mockConnections = [
   { name: 'home', elements: 7, user: '@thyllakos', verified: false, icon: 'green' },
   { name: 'amorphous', elements: 41, user: '@redjapanesemaple', verified: false, icon: 'orange' },
 ]
+
+// Pre-compute once at module level
+const totalConnections = mockConnections.reduce((s, c) => s + c.elements, 0).toLocaleString()
 
 // Three dots menu
 function MoreMenu({ onClose }) {
@@ -74,9 +77,9 @@ function DreamboardDropdown({ selected, onSelect, onClose }) {
 }
 
 // View Similar animated button
-function ViewSimilarButton({ onClick, gradients }) {
+function ViewSimilarButton({ onClick, products }) {
   const [hovered, setHovered] = useState(false)
-  const thumbs = gradients.slice(0, 3)
+  const thumbs = products.slice(0, 3)
 
   return (
     <button
@@ -87,21 +90,26 @@ function ViewSimilarButton({ onClick, gradients }) {
     >
       {/* Stacked thumbnails */}
       <div className="relative w-14 h-14">
-        {thumbs.map((g, i) => (
+        {thumbs.map((p, i) => (
           <div
             key={i}
             className="absolute w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-white/50"
             style={{
-              background: g,
               left: `${6 + i * 4}px`,
               top: `${6 - i * 4}px`,
               zIndex: 3 - i,
               transform: hovered
-                ? `rotate(${(i - 1) * (hovered ? 12 : 0)}deg) scale(1.05)`
+                ? `rotate(${(i - 1) * 12}deg) scale(1.05)`
                 : `rotate(${(i - 1) * 5}deg)`,
               transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)',
             }}
-          />
+          >
+            {p.image ? (
+              <img src={p.image} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full" style={{ background: p.gradient }} />
+            )}
+          </div>
         ))}
       </div>
       <span className="flex items-center gap-1 text-[14px] font-medium text-[#1A1A1A]">
@@ -140,7 +148,7 @@ function ConnectionIcon({ type }) {
 export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const product = mockProducts.find((p) => p.id === Number(id))
+  const product = useMemo(() => mockProducts.find((p) => p.id === Number(id)), [id])
   const [showMoreMenu, setShowMoreMenu] = useState(false)
   const [showSimilar, setShowSimilar] = useState(false)
   const [showBackToTop, setShowBackToTop] = useState(false)
@@ -150,32 +158,50 @@ export default function ProductDetail() {
   const containerRef = useRef(null)
   const similarRef = useRef(null)
 
-  // Similar products
-  const similar = product
-    ? mockProducts.filter((p) => p.id !== product.id)
-    : []
+  // Similar products — same category first, then others (memoized)
+  const similar = useMemo(
+    () => product
+      ? [
+          ...mockProducts.filter((p) => p.id !== product.id && p.category === product.category),
+          ...mockProducts.filter((p) => p.id !== product.id && p.category !== product.category),
+        ]
+      : [],
+    [product]
+  )
 
-  // Color dots from thumbnails
-  const colorDots = product
-    ? product.thumbnails.slice(0, 5).map((t) => {
-        const match = t.match(/#([0-9a-fA-F]{6})/)
-        return match ? `#${match[1]}` : '#888'
-      })
-    : []
+  // Color dots from thumbnails (memoized)
+  const colorDots = useMemo(
+    () => product && product.thumbnails
+      ? product.thumbnails.slice(0, 5).map((t) => {
+          const match = t.match(/#([0-9a-fA-F]{6})/)
+          return match ? `#${match[1]}` : '#888'
+        })
+      : [],
+    [product]
+  )
 
-  // Handle scroll to detect when to show similar / back to top
+  // Similar products for ViewSimilarButton (memoized)
+  const similarPreview = useMemo(() => similar.slice(0, 3), [similar])
+
+  // Throttled scroll handler with rAF
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
+    let ticking = false
     function onScroll() {
-      const scrollBottom = el.scrollTop + el.clientHeight
-      const threshold = el.scrollHeight - 200
-      if (scrollBottom >= threshold && !showSimilar) {
-        setShowSimilar(true)
-      }
-      setShowBackToTop(el.scrollTop > 400)
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const scrollBottom = el.scrollTop + el.clientHeight
+        const threshold = el.scrollHeight - 200
+        if (scrollBottom >= threshold && !showSimilar) {
+          setShowSimilar(true)
+        }
+        setShowBackToTop(el.scrollTop > 400)
+        ticking = false
+      })
     }
-    el.addEventListener('scroll', onScroll)
+    el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   }, [showSimilar])
 
@@ -190,9 +216,9 @@ export default function ProductDetail() {
     )
   }
 
-  function scrollToTop() {
+  const scrollToTop = useCallback(() => {
     containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  }, [])
 
   // View Similar grid
   if (showSimilar) {
@@ -207,7 +233,7 @@ export default function ProductDetail() {
         </button>
 
         {/* Masonry grid */}
-        <div className="px-8 py-8 columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+        <div className="px-[52px] py-8 columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
           {similar.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
@@ -232,19 +258,29 @@ export default function ProductDetail() {
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 z-30 w-9 h-9 rounded-full bg-white border border-[#E5E2DD] flex items-center justify-center shadow-sm hover:bg-[#F5F3F0] transition-colors"
+        className="absolute top-6 left-[52px] z-30 w-9 h-9 rounded-full bg-white border border-[#E5E2DD] flex items-center justify-center shadow-sm hover:bg-[#F5F3F0] transition-colors"
       >
         <ChevronLeft size={18} className="text-[#6B6560]" />
       </button>
 
-      <div className="flex p-4 gap-4" style={{ minHeight: 'calc(100vh - 56px + 250px)' }}>
+      <div className="flex px-[52px] py-4 gap-4" style={{ minHeight: 'calc(100vh - 56px + 250px)' }}>
         {/* Left: Image area */}
         <div className="flex-1 flex flex-col items-center justify-center px-12 py-8 relative min-h-[calc(100vh-56px)]">
           {/* Main image */}
-          <div
-            className="w-full max-w-[640px] aspect-[3/4] rounded-lg overflow-hidden"
-            style={{ background: product.gradient }}
-          />
+          {product.image ? (
+            <img
+              src={product.image}
+              alt={product.title}
+              className="w-full max-w-[640px] aspect-[3/4] rounded-lg overflow-hidden object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div
+              className="w-full max-w-[640px] aspect-[3/4] rounded-lg overflow-hidden"
+              style={{ background: product.gradient }}
+            />
+          )}
 
           {/* Color dots - left edge */}
           <div className="absolute bottom-8 left-6 flex flex-col gap-2">
@@ -261,7 +297,7 @@ export default function ProductDetail() {
           <div className="mt-8">
             <ViewSimilarButton
               onClick={() => setShowSimilar(true)}
-              gradients={similar.slice(0, 3).map((p) => p.gradient)}
+              products={similarPreview}
             />
           </div>
         </div>
@@ -345,7 +381,7 @@ export default function ProductDetail() {
               className="text-[16px] text-[#1A1A1A] mb-4"
               style={{ fontFamily: 'var(--font-heading)', fontWeight: 500 }}
             >
-              {mockConnections.reduce((s, c) => s + c.elements, 0).toLocaleString()} Connections
+              {totalConnections} Connections
             </h3>
 
             <div className="space-y-1">

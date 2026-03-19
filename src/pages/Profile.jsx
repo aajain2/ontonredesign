@@ -1,17 +1,20 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import SurfaceCard from '../components/SurfaceCard'
 import { mockProducts, mockSurfaces } from '../data/mockData'
 
+// Pre-compute static banner thumbnails once
+const bannerThumbnails = mockProducts.slice(0, 6)
+
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('elements')
   const [showBanner, setShowBanner] = useState(true)
 
   const elementCount = mockProducts.length
-  const dreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
-  const rooms = mockSurfaces.filter((s) => s.type === 'room')
+  const dreamboards = useMemo(() => mockSurfaces.filter((s) => s.type === 'dreamboard'), [])
+  const rooms = useMemo(() => mockSurfaces.filter((s) => s.type === 'room'), [])
   const collectionCount = dreamboards.length + rooms.length
 
   return (
@@ -19,9 +22,8 @@ export default function Profile() {
       <div className="px-[52px] pt-8 pb-12">
         {/* Profile header */}
         <div className="flex items-start justify-between mb-6">
-          {/* Left: Avatar + name */}
           <div className="flex items-center gap-5">
-            <img src="/avatar.png" alt="Profile" className="w-[80px] h-[80px] rounded-full object-cover flex-shrink-0" />
+            <img src="/avatar.png" alt="Profile" className="w-[80px] h-[80px] rounded-full object-cover flex-shrink-0" loading="lazy" decoding="async" />
             <div>
               <h1
                 className="text-[28px] text-[#1A1A1A] leading-tight"
@@ -33,7 +35,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Right: Follower stats */}
           <div className="flex items-center gap-6 pt-2">
             <button className="text-center hover:opacity-70 transition-opacity">
               <span className="text-[14px] font-semibold text-[#1A1A1A]">01</span>
@@ -48,7 +49,6 @@ export default function Profile() {
 
         {/* Action bar */}
         <div className="flex items-center justify-between mb-7">
-          {/* Edit Profile */}
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-settings'))}
             className="px-6 py-2.5 text-[14px] font-medium text-[#1A1A1A] bg-[#E5E2DD] rounded-full hover:bg-[#D5D2CD] transition-colors"
@@ -56,7 +56,6 @@ export default function Profile() {
             Edit Profile
           </button>
 
-          {/* Tabs — Are.na style segmented control */}
           <div className="flex items-center bg-[#E8E6E3] rounded-full p-[3px] border border-[#D8D5D0]">
             <button
               onClick={() => setActiveTab('elements')}
@@ -90,7 +89,6 @@ export default function Profile() {
             </button>
           </div>
 
-          {/* Right actions */}
           <div className="flex items-center gap-2">
             <button className="px-5 py-2 text-[13px] font-medium text-[#1A1A1A] border border-[#D5D2CD] rounded-full hover:bg-[#EEEDEB] transition-colors">
               Organize
@@ -104,7 +102,6 @@ export default function Profile() {
         {/* Elements tab */}
         {activeTab === 'elements' && (
           <>
-            {/* Banner */}
             {showBanner && (
               <div className="mb-6 bg-white rounded-2xl p-6 flex items-center gap-5 border border-[#E5E2DD]">
                 <div className="flex-1">
@@ -126,23 +123,19 @@ export default function Profile() {
                     </button>
                   </div>
                 </div>
-                {/* Decorative circle with mini thumbnails */}
                 <div className="w-[100px] h-[100px] rounded-full bg-[#F5F3F0] flex-shrink-0 flex items-center justify-center">
                   <div className="flex flex-wrap gap-1 w-[60px] justify-center">
-                    {mockProducts.slice(0, 6).map((p, i) => (
-                      <div
-                        key={i}
-                        className="w-[18px] h-[18px] rounded-[4px]"
-                        style={{ background: p.gradient }}
-                      />
+                    {bannerThumbnails.map((p, i) => (
+                      p.image
+                        ? <img key={i} src={p.image} alt="" className="w-[18px] h-[18px] rounded-[4px] object-cover" />
+                        : <div key={i} className="w-[18px] h-[18px] rounded-[4px]" style={{ background: p.gradient }} />
                     ))}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Masonry grid of saved products */}
-            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
               {mockProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -153,7 +146,6 @@ export default function Profile() {
         {/* Collections tab */}
         {activeTab === 'collections' && (
           <div>
-            {/* Dreamboards section */}
             {dreamboards.length > 0 && (
               <section className="mb-10">
                 <h2
@@ -170,7 +162,6 @@ export default function Profile() {
               </section>
             )}
 
-            {/* Rooms section */}
             {rooms.length > 0 && (
               <section>
                 <h2

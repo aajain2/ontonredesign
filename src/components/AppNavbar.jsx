@@ -1,18 +1,24 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Bookmark, Zap, MoreHorizontal } from 'lucide-react'
 import { LogoIcon } from './Logo'
 import SearchBar from './SearchBar'
-import SettingsModal from './SettingsModal'
-import NewClusterModal from './NewClusterModal'
 import ProfileDropdown from './ProfileDropdown'
 import { mockSurfaces, mockProducts } from '../data/mockData'
+
+// Lazy-load heavy modals
+const SettingsModal = lazy(() => import('./SettingsModal'))
+const NewClusterModal = lazy(() => import('./NewClusterModal'))
 
 const navLinks = [
   { name: 'For You', path: '/' },
   { name: 'Following', path: '/following' },
   { name: 'Explore', path: '/explore' },
 ]
+
+// Pre-compute filtered data at module level (static data)
+const libraryDreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
+const productCount = mockProducts.length
 
 // Library dropdown (the overlapping cards icon)
 function LibraryDropdown({ onClose }) {
@@ -26,9 +32,6 @@ function LibraryDropdown({ onClose }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
 
-  const dreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
-  const rooms = mockSurfaces.filter((s) => s.type === 'room')
-
   return (
     <div ref={ref} className="absolute top-full right-0 mt-2 w-[300px] bg-[#F0EEEA] rounded-2xl shadow-xl border border-[#E5E2DD] py-3 z-50">
       {/* All Products */}
@@ -41,14 +44,14 @@ function LibraryDropdown({ onClose }) {
           <Bookmark size={18} className="text-[#1A1A1A]" />
         </div>
         <span className="text-[14px] font-medium text-[#1A1A1A] flex-1">All Products</span>
-        <span className="text-[13px] text-[#8A8580] bg-[#E5E2DD] rounded-lg px-2.5 py-0.5">{mockProducts.length}</span>
+        <span className="text-[13px] text-[#8A8580] bg-[#E5E2DD] rounded-lg px-2.5 py-0.5">{productCount}</span>
       </Link>
 
       {/* Divider */}
       <div className="border-t border-[#E5E2DD] my-2" />
 
       {/* Individual dreamboards */}
-      {dreamboards.slice(0, 4).map((board) => (
+      {libraryDreamboards.slice(0, 4).map((board) => (
         <Link
           key={board.id}
           to="#"
@@ -113,11 +116,11 @@ const mockActivity = [
     id: 1,
     type: 'cluster',
     user: 'Kosi',
-    avatar: 'https://i.pravatar.cc/80?img=47',
-    text: 'made a new cluster called',
+    avatar: '/images/aayush-avatar.jpg',
+    text: 'made a new dreamboard called',
     target: 'Dorm Room',
-    thumbnail: 'https://images.unsplash.com/photo-1596438459194-f275f413d6ff?w=120&h=120&fit=crop',
-    context: "You follow 1 of Kosi's clusters",
+    thumbnail: '/images/dorm-room.jpg',
+    context: "You follow 1 of Kosi's dreamboards",
     time: '2d',
   },
   {
@@ -440,8 +443,10 @@ export default function AppNavbar() {
         </div>
       </div>
 
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-      {showNewCluster && <NewClusterModal onClose={() => setShowNewCluster(false)} />}
+      <Suspense fallback={null}>
+        {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+        {showNewCluster && <NewClusterModal onClose={() => setShowNewCluster(false)} />}
+      </Suspense>
     </header>
   )
 }

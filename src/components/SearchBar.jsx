@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, ArrowUpRight, Link as LinkIcon } from 'lucide-react'
 
@@ -89,18 +89,49 @@ function PaletteIcon({ size = 22, className = '' }) {
 
 // ── Panels ──
 
-function VisualSearchPanel() {
+function VisualSearchPanel({ onImageSelected }) {
+  const fileInputRef = useRef(null)
+
+  function handleFile(file) {
+    if (file && file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      onImageSelected(url)
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault()
+    const file = e.dataTransfer.files[0]
+    handleFile(file)
+  }
+
   return (
     <div className="absolute top-full left-0 right-0 mt-1 bg-[#EEEDEB] rounded-[16px] z-50 p-5">
-      <div className="border-2 border-dashed border-[#D5D2CD] rounded-2xl p-8 flex flex-col items-center justify-center min-h-[220px]">
+      <div
+        className="border-2 border-dashed border-[#D5D2CD] rounded-2xl p-8 flex flex-col items-center justify-center min-h-[220px]"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
         <div className="bg-[#E8E7E5] rounded-full px-5 py-2.5 flex items-center gap-2.5 mb-5">
           <ViewfinderIcon size={20} className="text-[#1A1A1A]" />
           <span className="text-[14px] font-medium text-[#1A1A1A]">Visual Search</span>
         </div>
         <p className="text-[14px] text-[#727170]">
           Drag an image here or{' '}
-          <button className="text-[#1A1A1A] underline underline-offset-2 font-medium">upload a file</button>
+          <button
+            className="text-[#1A1A1A] underline underline-offset-2 font-medium"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            upload a file
+          </button>
         </p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files[0])}
+        />
       </div>
       <div className="flex items-center gap-4 my-5">
         <div className="flex-1 border-t border-[#D5D2CD]" />
@@ -109,7 +140,16 @@ function VisualSearchPanel() {
       </div>
       <div className="bg-[#E8E7E5] rounded-full px-5 py-3.5 flex items-center gap-3">
         <LinkIcon size={18} className="text-[#727170] flex-shrink-0" />
-        <input type="text" placeholder="Paste image URL" className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#727170] text-[#1A1A1A]" />
+        <input
+          type="text"
+          placeholder="Paste image URL"
+          className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#727170] text-[#1A1A1A]"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+              onImageSelected(e.target.value.trim())
+            }
+          }}
+        />
       </div>
     </div>
   )
@@ -171,6 +211,7 @@ export default function SearchBar() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [showVisualSearch, setShowVisualSearch] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
+  const [visualSearchImage, setVisualSearchImage] = useState(null)
   const [recentItems, setRecentItems] = useState(recentSearches)
   const containerRef = useRef(null)
   const navigate = useNavigate()
@@ -198,24 +239,35 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  function handleSubmit(e) {
+  const closeAll = useCallback(() => {
+    setIsExpanded(false)
+    setShowVisualSearch(false)
+    setShowColorPicker(false)
+  }, [])
+
+  const handleSubmit = useCallback((e) => {
     e.preventDefault()
     if (query.trim()) {
       closeAll()
       navigate(`/search?q=${encodeURIComponent(query.trim())}`)
     }
-  }
+  }, [query, closeAll, navigate])
 
-  function handleSearchClick(term) {
+  const handleSearchClick = useCallback((term) => {
     closeAll()
     navigate(`/search?q=${encodeURIComponent(term)}`)
-  }
+  }, [closeAll, navigate])
 
-  function closeAll() {
-    setIsExpanded(false)
+  const handleImageSelected = useCallback((imageUrl) => {
+    setVisualSearchImage(imageUrl)
     setShowVisualSearch(false)
-    setShowColorPicker(false)
-  }
+    setQuery('')
+    navigate(`/search?q=visual-search&img=${encodeURIComponent(imageUrl)}`)
+  }, [navigate])
+
+  const clearVisualSearch = useCallback(() => {
+    setVisualSearchImage(null)
+  }, [])
 
   const anyOpen = isExpanded || showVisualSearch || showColorPicker
 
@@ -230,13 +282,29 @@ export default function SearchBar() {
     >
       {/* Search pill */}
       <div
-        className="flex items-center gap-2.5 rounded-[16px] px-4 py-3 cursor-text"
+        className={`flex items-center gap-2.5 rounded-[16px] cursor-text ${visualSearchImage ? 'pl-1.5 pr-4 py-1.5' : 'px-4 py-3'}`}
         style={{
           backgroundColor: 'var(--bg-surface-secondary)',
           transition: 'background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
       >
-        <SparkleIcon size={16} className="text-[#727170] flex-shrink-0" />
+        {visualSearchImage ? (
+          <div className="relative flex-shrink-0 group/img">
+            <img
+              src={visualSearchImage}
+              alt="Visual search"
+              className="w-[38px] h-[38px] rounded-[10px] object-cover"
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); clearVisualSearch() }}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-[10px] leading-none opacity-0 group-hover/img:opacity-100 transition-opacity"
+            >
+              ×
+            </button>
+          </div>
+        ) : (
+          <SparkleIcon size={16} className="text-[#727170] flex-shrink-0" />
+        )}
 
         {anyOpen ? (
           <form onSubmit={handleSubmit} className="flex-1 flex items-center">
@@ -244,7 +312,7 @@ export default function SearchBar() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search Onton..."
+              placeholder={visualSearchImage ? 'Filter by keyword...' : 'Search Onton...'}
               className="flex-1 text-[14px] outline-none bg-transparent placeholder:text-[#727170] text-[#1A1A1A]"
               autoFocus
             />
@@ -255,7 +323,7 @@ export default function SearchBar() {
             onClick={() => setIsExpanded(true)}
           >
             <span className="text-[14px] text-[#727170] truncate block select-none">
-              {existingQuery || placeholders[placeholderIndex]}
+              {visualSearchImage ? 'Filter by keyword...' : (existingQuery || placeholders[placeholderIndex])}
             </span>
           </div>
         )}
@@ -296,7 +364,7 @@ export default function SearchBar() {
       </div>
 
       {/* Visual Search Panel */}
-      {showVisualSearch && <VisualSearchPanel />}
+      {showVisualSearch && <VisualSearchPanel onImageSelected={handleImageSelected} />}
 
       {/* Color Picker Panel */}
       {showColorPicker && <ColorPickerPanel onSearch={handleSearchClick} />}

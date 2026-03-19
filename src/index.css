@@ -117,7 +117,13 @@
 
 html {
   scroll-behavior: smooth;
-  transition: background-color 0.3s ease, color 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
@@ -182,6 +188,7 @@ h1, h2, h3 {
 }
 .animate-float {
   animation: float 8s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  will-change: transform;
 }
 
 /* ── Dark mode: global color remaps ── */
@@ -259,20 +266,20 @@ h1, h2, h3 {
 /* Color scheme for native elements */
 .dark { color-scheme: dark; }
 
-/* Global luxurious transition defaults */
+/* Global luxurious transition defaults (optimized durations) */
 .transition-all {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  transition-duration: 450ms;
+  transition-duration: 250ms;
 }
 .transition-colors {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  transition-duration: 350ms;
+  transition-duration: 200ms;
 }
 .transition-opacity {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  transition-duration: 400ms;
+  transition-duration: 200ms;
 }
 .transition-transform {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  transition-duration: 500ms;
+  transition-duration: 300ms;
 }
