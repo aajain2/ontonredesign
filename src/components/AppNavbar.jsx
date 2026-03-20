@@ -424,7 +424,7 @@ export default function AppNavbar() {
                   ? 'ring-[2px] ring-[#1A1A1A]'
                   : 'group-hover:ring-[2px] group-hover:ring-[#E0DDD8]'
               }`}>
-                <img src="/avatar.png" alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                <img src="/avatar.png" alt="Profile" className="w-8 h-8 rounded-full object-cover flex-shrink-0" width={32} height={32} fetchPriority="high" />
               </div>
             </Link>
             <button

@@ -225,7 +225,7 @@ function CollectionPicker({ anchorRect, onClose }) {
 }
 
 // ── Product Card ──
-export default memo(function ProductCard({ product, showInfo }) {
+export default memo(function ProductCard({ product, showInfo, priority }) {
   const { id, title, gradient, image, aspectRatio, retailer, price } = product
   const [saved, setSaved] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
@@ -251,7 +251,7 @@ export default memo(function ProductCard({ product, showInfo }) {
       <Link to={`/product/${id}`} className="group block mb-[16px] break-inside-avoid">
         <div ref={cardRef} className="relative rounded-[4px] overflow-hidden">
           {image ? (
-            <img src={image} alt={title} className="w-full object-cover" style={imageStyle} loading="lazy" decoding="async" />
+            <img src={image} alt={title} className="w-full object-cover" style={imageStyle} loading={priority ? 'eager' : 'lazy'} decoding={priority ? 'sync' : 'async'} fetchPriority={priority ? 'high' : 'auto'} />
           ) : (
             <div className="w-full" style={gradientStyle} />
           )}

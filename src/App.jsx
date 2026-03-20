@@ -25,6 +25,7 @@ const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Profile = lazy(() => import('./pages/Profile'))
 const SurfaceDetail = lazy(() => import('./pages/SurfaceDetail'))
 const RoomDetail = lazy(() => import('./pages/RoomDetail'))
+const ImagineRoom = lazy(() => import('./pages/ImagineRoom'))
 
 // Lazy-loaded heavy component
 const Footer = lazy(() => import('./components/Footer'))
@@ -107,7 +108,7 @@ function App() {
             <Route path="/room/:id" element={<RoomDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/gather" element={<Dashboard />} />
-            <Route path="/imagine-app" element={<Dashboard />} />
+            <Route path="/imagine-app" element={<ImagineRoom />} />
           </Routes>
         </Suspense>
       </main>

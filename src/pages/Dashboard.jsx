@@ -38,8 +38,8 @@ export default function Dashboard() {
             <h2 className="text-[22px] font-semibold text-[#1A1A1A]">Products</h2>
           </div>
           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]">
-            {visibleItems.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {visibleItems.map((product, i) => (
+              <ProductCard key={product.id} product={product} priority={i < 5} />
             ))}
             <MasonrySentinel sentinelRef={sentinelRef} hasMore={hasMore} />
           </div>

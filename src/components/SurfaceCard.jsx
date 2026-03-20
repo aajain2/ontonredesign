@@ -59,18 +59,18 @@ export default memo(function SurfaceCard({ surface }) {
         style={{ background: hasImageThumbnails ? undefined : coverBg }}
       >
         {surface.coverImage ? (
-          <img src={surface.coverImage} alt={title} className="w-full h-full object-cover" />
+          <img src={surface.coverImage} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
         ) : hasImageThumbnails ? (
           <div className="flex gap-[2px] w-full h-full">
             <div className="flex-[2] h-full">
-              <img src={thumbnails[0]} alt="" className="w-full h-full object-cover" />
+              <img src={thumbnails[0]} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
             </div>
             <div className="flex-[1] flex flex-col gap-[2px] h-full">
               <div className="flex-1 overflow-hidden">
-                <img src={thumbnails[1]} alt="" className="w-full h-full object-cover" />
+                <img src={thumbnails[1]} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>
               <div className="flex-1 overflow-hidden">
-                <img src={thumbnails[2]} alt="" className="w-full h-full object-cover" />
+                <img src={thumbnails[2]} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@ export default memo(function SurfaceCard({ surface }) {
       <div className="mt-3 flex items-center gap-2.5">
         <div className="w-[28px] h-[28px] rounded-full bg-[#E5E2DD] flex-shrink-0 overflow-hidden">
           {avatar ? (
-            <img src={avatar} alt={username} className="w-full h-full object-cover" />
+            <img src={avatar} alt={username} className="w-full h-full object-cover" loading="lazy" decoding="async" width={28} height={28} />
           ) : (
             <div
               className="w-full h-full rounded-full"

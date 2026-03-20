@@ -1,15 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Globe, ChevronDown } from 'lucide-react'
 
 export default function NewClusterModal({ onClose, onCreate, type = 'dreamboard' }) {
+  const navigate = useNavigate()
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState('Public')
   const [showDropdown, setShowDropdown] = useState(false)
 
   const isRoom = type === 'room'
-  const label = isRoom ? 'New Room' : 'New Dreamboard'
-  const subtitle = isRoom ? 'Design a room with products' : 'A collection of elements'
-  const placeholder = isRoom ? "Ex. 'Living Room'" : "Ex. 'Graphic Design'"
+
+  // For rooms, navigate to the imagine-app page instead
+  useEffect(() => {
+    if (isRoom) {
+      onClose()
+      navigate('/imagine-app')
+    }
+  }, [isRoom, onClose, navigate])
+
+  // Don't render modal for rooms
+  if (isRoom) return null
 
   function handleCreate() {
     if (onCreate) onCreate({ name: name.trim() || 'Untitled', visibility, type })
@@ -19,7 +29,7 @@ export default function NewClusterModal({ onClose, onCreate, type = 'dreamboard'
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-[3px] z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[60]" onClick={onClose} />
 
       {/* Modal */}
       <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
@@ -29,10 +39,10 @@ export default function NewClusterModal({ onClose, onCreate, type = 'dreamboard'
             className="text-[22px] text-center text-[#1A1A1A] mb-1"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            {label}
+            New Dreamboard
           </h2>
           <p className="text-[13px] text-[#8A8580] text-center mb-6">
-            {subtitle}
+            A collection of elements
           </p>
 
           {/* Input row */}
@@ -41,7 +51,7 @@ export default function NewClusterModal({ onClose, onCreate, type = 'dreamboard'
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={placeholder}
+              placeholder="Ex. 'Graphic Design'"
               className="flex-1 bg-transparent text-[14px] outline-none text-[#1A1A1A] placeholder:text-[#A8A29E]"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
