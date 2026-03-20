@@ -116,7 +116,7 @@ const mockActivity = [
     id: 1,
     type: 'cluster',
     user: 'Kosi',
-    avatar: '/images/aayush-avatar.jpg',
+    avatar: '/images/kosi-avatar.jpg',
     text: 'made a new dreamboard called',
     target: 'Dorm Room',
     thumbnail: '/images/dorm-room.jpg',
@@ -168,7 +168,7 @@ function ActivityDropdown({ onClose }) {
     >
       {/* Header */}
       <div className="px-6 pt-5 pb-4 border-b border-[#EEEDEB]">
-        <h2 className="text-[22px] text-center" style={{ fontFamily: '"Romie Trial", Georgia, serif', fontStyle: 'italic', color: 'var(--text-primary)' }}>
+        <h2 className="text-[18px] text-center" style={{ fontFamily: '"Romie Trial", Georgia, serif', color: 'var(--text-primary)' }}>
           Activity
         </h2>
       </div>

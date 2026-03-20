@@ -1,10 +1,11 @@
+import { Link } from 'react-router-dom'
 import { Plus } from 'lucide-react'
 
 export default function RoomCard({ room }) {
   const { image, aspectRatio, designer, saves } = room
 
   return (
-    <div className="group block mb-[16px] break-inside-avoid cursor-pointer">
+    <Link to={`/room/${room.id}`} className="group block mb-[16px] break-inside-avoid cursor-pointer">
       <div className="relative rounded-[4px] overflow-hidden">
         <img
           src={image}
@@ -28,6 +29,6 @@ export default function RoomCard({ room }) {
           <p className="text-white/70 text-[11px]">{saves.toLocaleString()} saves</p>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

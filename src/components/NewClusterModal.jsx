@@ -1,33 +1,38 @@
 import { useState } from 'react'
 import { Globe, ChevronDown } from 'lucide-react'
 
-export default function NewClusterModal({ onClose, onCreate }) {
+export default function NewClusterModal({ onClose, onCreate, type = 'dreamboard' }) {
   const [name, setName] = useState('')
   const [visibility, setVisibility] = useState('Public')
   const [showDropdown, setShowDropdown] = useState(false)
 
+  const isRoom = type === 'room'
+  const label = isRoom ? 'New Room' : 'New Dreamboard'
+  const subtitle = isRoom ? 'Design a room with products' : 'A collection of elements'
+  const placeholder = isRoom ? "Ex. 'Living Room'" : "Ex. 'Graphic Design'"
+
   function handleCreate() {
-    if (onCreate) onCreate({ name: name.trim() || 'Untitled', visibility })
+    if (onCreate) onCreate({ name: name.trim() || 'Untitled', visibility, type })
     onClose()
   }
 
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[3px] z-[60]" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div className="bg-[#F5F3F0] rounded-2xl shadow-2xl w-full max-w-[420px] p-7">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
+        <div className="bg-[#F5F3F0] rounded-2xl shadow-2xl w-full max-w-[420px] p-7" onClick={(e) => e.stopPropagation()}>
           {/* Title */}
           <h2
             className="text-[22px] text-center text-[#1A1A1A] mb-1"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            New Dreamboard
+            {label}
           </h2>
           <p className="text-[13px] text-[#8A8580] text-center mb-6">
-            A curated collection of inspiration
+            {subtitle}
           </p>
 
           {/* Input row */}
@@ -36,7 +41,7 @@ export default function NewClusterModal({ onClose, onCreate }) {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex. \u2018Editorial\u2019"
+              placeholder={placeholder}
               className="flex-1 bg-transparent text-[14px] outline-none text-[#1A1A1A] placeholder:text-[#A8A29E]"
               autoFocus
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}

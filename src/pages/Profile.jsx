@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import SurfaceCard from '../components/SurfaceCard'
+import MasonrySentinel from '../components/MasonrySentinel'
+import useVisibleItems from '../hooks/useVisibleItems'
 import { mockProducts, mockSurfaces } from '../data/mockData'
 
 // Pre-compute static banner thumbnails once
@@ -16,6 +18,7 @@ export default function Profile() {
   const dreamboards = useMemo(() => mockSurfaces.filter((s) => s.type === 'dreamboard'), [])
   const rooms = useMemo(() => mockSurfaces.filter((s) => s.type === 'room'), [])
   const collectionCount = dreamboards.length + rooms.length
+  const { visibleItems, hasMore, sentinelRef } = useVisibleItems(mockProducts, { initialCount: 15, batchSize: 10 })
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -135,10 +138,11 @@ export default function Profile() {
               </div>
             )}
 
-            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
-              {mockProducts.map((product) => (
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+              {visibleItems.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
+              <MasonrySentinel sentinelRef={sentinelRef} hasMore={hasMore} />
             </div>
           </>
         )}

@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import SurfaceCard from '../components/SurfaceCard'
 import ProductCard from '../components/ProductCard'
+import MasonrySentinel from '../components/MasonrySentinel'
+import useVisibleItems from '../hooks/useVisibleItems'
 import { mockSurfaces, mockProducts } from '../data/mockData'
 
 export default function Dashboard() {
-  const dreamboards = useMemo(() => mockSurfaces.filter((s) => s.type === 'dreamboard'), [])
+  const surfaces = useMemo(() => mockSurfaces, [])
+  const { visibleItems, hasMore, sentinelRef } = useVisibleItems(mockProducts, { initialCount: 15, batchSize: 10 })
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -23,7 +26,7 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-hide">
-            {dreamboards.map((surface) => (
+            {surfaces.map((surface) => (
               <SurfaceCard key={surface.id} surface={surface} />
             ))}
           </div>
@@ -34,10 +37,11 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-[22px] font-semibold text-[#1A1A1A]">Products</h2>
           </div>
-          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
-            {mockProducts.map((product) => (
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]">
+            {visibleItems.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+            <MasonrySentinel sentinelRef={sentinelRef} hasMore={hasMore} />
           </div>
         </section>
       </div>

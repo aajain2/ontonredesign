@@ -23,6 +23,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const SearchResults = lazy(() => import('./pages/SearchResults'))
 const ProductDetail = lazy(() => import('./pages/ProductDetail'))
 const Profile = lazy(() => import('./pages/Profile'))
+const SurfaceDetail = lazy(() => import('./pages/SurfaceDetail'))
+const RoomDetail = lazy(() => import('./pages/RoomDetail'))
 
 // Lazy-loaded heavy component
 const Footer = lazy(() => import('./components/Footer'))
@@ -45,12 +47,13 @@ const marketingRoutes = [
 // Minimal loading fallback
 function PageLoader() {
   return (
-    <div className="flex-1 flex items-center justify-center min-h-[200px]">
-      <div
-        className="w-6 h-6 rounded-full border-2 border-[#E5E2DD] border-t-[#1A1A1A]"
-        style={{ animation: 'spin 0.6s linear infinite' }}
-      />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    <div className="flex-1 px-[52px] pt-8 pb-12">
+      <div className="h-6 w-40 bg-[#EEEDEB] rounded-lg mb-6 skeleton-pulse" />
+      <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]">
+        {[0,1,2,3,4,5,6,7,8,9].map((i) => (
+          <div key={i} className="mb-[16px] break-inside-avoid rounded-[4px] bg-[#EEEDEB] skeleton-pulse" style={{ aspectRatio: ['4/5','3/4','1/1','4/3'][i%4], animationDelay: `${i*80}ms` }} />
+        ))}
+      </div>
     </div>
   )
 }
@@ -100,6 +103,8 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/surface/:id" element={<SurfaceDetail />} />
+            <Route path="/room/:id" element={<RoomDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/gather" element={<Dashboard />} />
             <Route path="/imagine-app" element={<Dashboard />} />

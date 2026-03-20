@@ -15,9 +15,10 @@ export default function PremiumModal({ onClose }) {
       <div className="fixed inset-0 bg-[#0A0A0A]/90 z-[60]" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="w-full max-w-[420px] rounded-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
           style={{
             boxShadow: '0 0 60px 10px rgba(120, 80, 220, 0.3), 0 0 120px 20px rgba(120, 80, 220, 0.15)',
             border: '1.5px solid rgba(147, 112, 219, 0.5)',

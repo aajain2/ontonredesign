@@ -224,30 +224,16 @@ function ImportContentPanel() {
   )
 }
 
-// Slack icon
-function SlackIcon() {
+// Discord icon
+function DiscordIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path d="M5.04 15.16a1.29 1.29 0 11-2.58 0 1.29 1.29 0 012.58 0zm.65 0a1.29 1.29 0 012.58 0v3.23a1.29 1.29 0 11-2.58 0v-3.23z" fill="#E01E5A"/>
-      <path d="M8.84 5.04a1.29 1.29 0 110-2.58 1.29 1.29 0 010 2.58zm0 .65a1.29 1.29 0 110 2.58H5.61a1.29 1.29 0 110-2.58h3.23z" fill="#36C5F0"/>
-      <path d="M18.96 8.84a1.29 1.29 0 112.58 0 1.29 1.29 0 01-2.58 0zm-.65 0a1.29 1.29 0 11-2.58 0V5.61a1.29 1.29 0 112.58 0v3.23z" fill="#2EB67D"/>
-      <path d="M15.16 18.96a1.29 1.29 0 110 2.58 1.29 1.29 0 010-2.58zm0-.65a1.29 1.29 0 110-2.58h3.23a1.29 1.29 0 110 2.58h-3.23z" fill="#ECB22E"/>
+      <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.009c.12.099.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" fill="#5865F2"/>
     </svg>
   )
 }
 
 // Chrome icon
-function ChromeIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="20" fill="#fff" stroke="#E5E2DD" strokeWidth="2"/>
-      <circle cx="24" cy="24" r="8" fill="#4285F4"/>
-      <path d="M24 16h16.8" stroke="#DB4437" strokeWidth="6" strokeLinecap="round"/>
-      <path d="M15.6 29L7.2 14.4" stroke="#0F9D58" strokeWidth="6" strokeLinecap="round"/>
-      <path d="M32.4 29L24 44.8" stroke="#F4B400" strokeWidth="6" strokeLinecap="round"/>
-    </svg>
-  )
-}
 
 // ── Main Modal ──
 
@@ -268,10 +254,10 @@ export default function SettingsModal({ onClose }) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-[3px] z-[60]" onClick={onClose} />
 
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-        <div className="bg-[#F5F4F2] rounded-2xl shadow-2xl w-full max-w-[660px] max-h-[80vh] flex overflow-hidden">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
+        <div className="bg-[#F5F4F2] rounded-2xl shadow-2xl w-full max-w-[660px] max-h-[80vh] flex overflow-hidden" onClick={(e) => e.stopPropagation()}>
           {/* Left sidebar */}
           <div className="w-[220px] flex-shrink-0 flex flex-col p-5 border-r border-[#EEEDEB]">
             {/* Avatar */}
@@ -305,12 +291,8 @@ export default function SettingsModal({ onClose }) {
             {/* Bottom links */}
             <div className="mt-4 space-y-1">
               <button className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-[#EEEDEB] transition-colors text-left">
-                <SlackIcon />
-                <span className="text-[13px] text-[#1A1A1A]">Join us on Slack</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-[#EEEDEB] transition-colors text-left">
-                <ChromeIcon />
-                <span className="text-[13px] text-[#1A1A1A]">Get the extension</span>
+                <DiscordIcon />
+                <span className="text-[13px] text-[#1A1A1A]">Join us on Discord</span>
               </button>
             </div>
           </div>

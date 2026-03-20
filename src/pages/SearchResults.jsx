@@ -1,8 +1,10 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback, startTransition } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronDown, SlidersHorizontal } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import RoomCard from '../components/RoomCard'
+import MasonrySentinel from '../components/MasonrySentinel'
+import useVisibleItems from '../hooks/useVisibleItems'
 import { mockProducts, productCategories, mockRoomImages } from '../data/mockData'
 
 export default function SearchResults() {
@@ -82,24 +84,27 @@ export default function SearchResults() {
     return filtered
   }, [preFiltered, effectiveMin, effectiveMax, sortBy])
 
+  // Incremental rendering for results
+  const { visibleItems: visibleResults, hasMore, sentinelRef } = useVisibleItems(results, { initialCount: 15, batchSize: 10 })
+
   // Reset price range when category changes
   useEffect(() => {
     setPriceRange(null)
   }, [selectedCategory, query])
 
   const handleCategorySelect = useCallback((cat) => {
-    setSelectedCategory(cat)
     setShowCategoryDropdown(false)
+    startTransition(() => setSelectedCategory(cat))
   }, [])
 
   const handleProductsCategorySelect = useCallback((cat) => {
-    setSelectedCategory(cat)
     setShowProductsCategoryDropdown(false)
+    startTransition(() => setSelectedCategory(cat))
   }, [])
 
   const handleSortSelect = useCallback((option) => {
-    setSortBy(option)
     setShowSortDropdown(false)
+    startTransition(() => setSortBy(option))
   }, [])
 
   return (
@@ -302,15 +307,18 @@ export default function SearchResults() {
 
       {/* Masonry grid — 5 columns */}
       <div className="px-[52px] pb-12 pt-6">
-        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
+        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-[16px]">
           {activeTab === 'rooms' ? (
             mockRoomImages.map((room) => (
               <RoomCard key={room.id} room={room} />
             ))
           ) : (
-            results.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
+            <>
+              {visibleResults.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+              <MasonrySentinel sentinelRef={sentinelRef} hasMore={hasMore} />
+            </>
           )}
         </div>
       </div>

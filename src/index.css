@@ -191,6 +191,20 @@ h1, h2, h3 {
   will-change: transform;
 }
 
+/* Skeleton pulse for loading states */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* CSS containment for masonry card items — isolates layout/paint */
+.break-inside-avoid {
+  contain: layout style;
+}
+
 /* ── Dark mode: global color remaps ── */
 /* Backgrounds */
 .dark .bg-white { background-color: var(--bg-surface) !important; }

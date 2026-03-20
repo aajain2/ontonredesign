@@ -439,16 +439,17 @@ export default function SearchBar() {
               <h3 className="text-[16px] mb-3" style={{ fontFamily: 'var(--font-heading)', fontWeight: 500 }}>Recently Viewed</h3>
               <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1">
                 {[
-                  { grad: 'linear-gradient(160deg, #3D2B1F 0%, #8B6914 40%, #2A1A0E 100%)' },
-                  { grad: 'linear-gradient(145deg, #1A3A2A 0%, #2D5A3D 50%, #0F2218 100%)' },
-                  { grad: 'linear-gradient(135deg, #1A2332 0%, #2A4A5A 50%, #0E1A24 100%)' },
-                  { grad: 'linear-gradient(150deg, #C4A87C 0%, #8B7355 40%, #6B5335 100%)' },
-                  { grad: 'linear-gradient(140deg, #3A5944 0%, #2A4A34 50%, #1A2F26 100%)' },
-                ].map((item, i) => (
-                  <div
+                  '/images/products/product-03.jpg',
+                  '/images/products/product-07.jpg',
+                  '/images/products/product-12.jpg',
+                  '/images/products/product-19.jpg',
+                  '/images/products/product-25.jpg',
+                ].map((src, i) => (
+                  <img
                     key={i}
-                    className="w-[120px] h-[150px] rounded-xl flex-shrink-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ background: item.grad }}
+                    src={src}
+                    alt=""
+                    className="w-[120px] h-[150px] rounded-xl flex-shrink-0 object-cover cursor-pointer hover:opacity-80 transition-opacity"
                   />
                 ))}
               </div>

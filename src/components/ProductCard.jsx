@@ -1,42 +1,49 @@
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { Plus, ChevronDown, Check, Home } from 'lucide-react'
+import { Plus, ChevronDown, Check } from 'lucide-react'
 import { mockSurfaces } from '../data/mockData'
+import NewClusterModal from './NewClusterModal'
 
-// Pre-compute filtered data once at module level (static data)
-const dreamboards = mockSurfaces.filter((s) => s.type === 'dreamboard')
-const rooms = mockSurfaces.filter((s) => s.type === 'room')
+const allCollections = mockSurfaces.map((s) => ({
+  ...s,
+  collectionType: s.type === 'room' ? 'Room' : 'Dreamboard',
+  privacy: s.type === 'room' ? null : (s.id % 2 === 0 ? null : 'Private'),
+}))
 
-// House icon for rooms
-function RoomIcon({ size = 16 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
-      <path d="M2 15V7L9 2.5L16 7V15H2Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-      <rect x="6.5" y="10" width="5" height="5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
-}
-
-export default memo(function ProductCard({ product, showInfo }) {
-  const { id, title, gradient, image, aspectRatio, retailer, price } = product
-  const [showPanel, setShowPanel] = useState(false)
+// ── Floating collection picker (portaled to body) ──
+function CollectionPicker({ anchorRect, onClose }) {
+  const ref = useRef(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [addedToIds, setAddedToIds] = useState(new Set())
-  const [addedToRoomId, setAddedToRoomId] = useState(null)
   const [profileAdded, setProfileAdded] = useState(false)
-  const panelRef = useRef(null)
+  const [showNewChoice, setShowNewChoice] = useState(false)
+  const [showNewModal, setShowNewModal] = useState(null)
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0, openAbove: false })
+
+  // Calculate position
+  useEffect(() => {
+    if (!anchorRect) return
+    const panelHeight = 440
+    const spaceBelow = window.innerHeight - anchorRect.bottom
+    const openAbove = spaceBelow < panelHeight && anchorRect.top > panelHeight
+    setPosition({
+      left: anchorRect.left,
+      width: Math.max(anchorRect.width, 300),
+      top: openAbove ? anchorRect.top : anchorRect.bottom,
+      openAbove,
+    })
+  }, [anchorRect])
 
   useEffect(() => {
-    if (!showPanel) return
     function handleClick(e) {
-      if (panelRef.current && !panelRef.current.contains(e.target)) {
-        setShowPanel(false)
-      }
+      if (ref.current && !ref.current.contains(e.target)) onClose()
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [showPanel])
+  }, [onClose])
 
-  const toggleDreamboard = useCallback((sid) => {
+  const toggleCollection = useCallback((sid) => {
     setAddedToIds((prev) => {
       const next = new Set(prev)
       if (next.has(sid)) next.delete(sid)
@@ -45,204 +52,275 @@ export default memo(function ProductCard({ product, showInfo }) {
     })
   }, [])
 
-  const toggleRoom = useCallback((sid) => {
-    setAddedToRoomId((prev) => prev === sid ? null : sid)
-  }, [])
+  const filtered = searchQuery
+    ? allCollections.filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : allCollections
 
-  // Stable style object for aspect ratio
-  const imageStyle = useMemo(() => ({
-    aspectRatio: aspectRatio || '1/1',
-  }), [aspectRatio])
+  if (showNewModal) {
+    return createPortal(
+      <NewClusterModal onClose={() => { setShowNewModal(null); onClose() }} type={showNewModal} />,
+      document.body
+    )
+  }
 
-  const gradientStyle = useMemo(() => ({
-    background: gradient,
-    aspectRatio: aspectRatio || '1/1',
-  }), [gradient, aspectRatio])
-
-  return (
-    <Link to={`/product/${id}`} className="group block mb-[16px] break-inside-avoid">
-      <div className="relative rounded-[4px] overflow-hidden">
-        {image ? (
-          <img
-            src={image}
-            alt={title}
-            className="w-full object-cover"
-            style={imageStyle}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div
-            className="w-full"
-            style={gradientStyle}
-          />
-        )}
-
-        {/* Hover: connect button (top-right) */}
-        <button
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-white z-10"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setShowPanel(true)
-          }}
-        >
-          <Plus size={16} strokeWidth={2} className="text-[#1A1A1A]" />
-        </button>
-
-        {/* Price bubble */}
-        {price && (
-          <div className="absolute bottom-2 left-2 bg-[#1A1A1A]/50 backdrop-blur-sm rounded-[8px] px-2.5 py-1 z-10">
-            <span className="text-white text-[13px] font-medium">
-              ${price.toLocaleString()}
-            </span>
+  return createPortal(
+    <div
+      ref={ref}
+      className="fixed z-[100]"
+      style={{
+        left: position.left,
+        width: position.width,
+        ...(position.openAbove
+          ? { bottom: window.innerHeight - position.top + 4 }
+          : { top: position.top + 4 }),
+      }}
+    >
+      <div className="bg-[#F5F3F0] rounded-2xl shadow-[0_8px_40px_rgba(0,0,0,0.12)] overflow-hidden">
+        {/* Panel body */}
+        <div className="max-h-[400px] overflow-y-auto">
+          {/* Profile row */}
+          <div className="flex items-center gap-3.5 px-5 py-4">
+            <div className="w-14 h-14 rounded-full bg-[#EEEDEB] flex items-center justify-center flex-shrink-0">
+              <img src="/avatar.png" alt="" className="w-8 h-8 rounded-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[16px] font-semibold text-[#1A1A1A]">Profile</p>
+              <p className="text-[14px] text-[#B0ADA8]">Public</p>
+            </div>
+            <button
+              onClick={() => setProfileAdded(!profileAdded)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                profileAdded ? 'bg-[#1A1A1A]' : 'border border-[#C5C2BD] hover:border-[#999]'
+              }`}
+            >
+              {profileAdded ? <Check size={18} className="text-white" /> : <Plus size={18} strokeWidth={1.5} className="text-[#B0ADA8]" />}
+            </button>
           </div>
-        )}
 
-        {/* ── Add-to picker panel ── */}
-        {showPanel && (
-          <div
-            ref={panelRef}
-            className="absolute inset-x-0 bottom-0 z-50"
-            onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-          >
-            <div className="bg-white/95 backdrop-blur-md rounded-t-2xl shadow-2xl max-h-[85%] overflow-y-auto">
-              {/* Profile row */}
-              <div className="flex items-center gap-3 px-5 py-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#F0EEEA] flex items-center justify-center flex-shrink-0">
-                  <img src="/avatar.png" alt="Profile" className="w-6 h-6 rounded-full object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-[#1A1A1A]">Profile</p>
-                  <p className="text-[12px] text-[#8A8580]">Public</p>
-                </div>
+          {/* Search */}
+          <div className="px-5 pb-4">
+            <div className="flex items-center bg-[#EEEDEB] rounded-2xl px-4 py-3.5">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent text-[15px] text-[#1A1A1A] placeholder:text-[#B0ADA8] outline-none w-full"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          {/* Collections header */}
+          <div className="flex items-center justify-between px-5 pt-1 pb-3">
+            <span className="text-[15px] text-[#B0ADA8]">Collections</span>
+            <button
+              className="flex items-center gap-1 text-[15px] font-bold text-[#1A1A1A] hover:text-[#555] transition-colors"
+              onClick={() => setShowNewChoice(!showNewChoice)}
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              New
+            </button>
+          </div>
+
+          {/* Collection list */}
+          <div className="pb-1">
+            {filtered.map((col) => {
+              const thumb = col.thumbnails && col.thumbnails.length > 0
+                ? col.thumbnails[0]
+                : col.canvasColor || 'linear-gradient(135deg, #E5E2DD, #D5D2CD)'
+              const isAdded = addedToIds.has(col.id)
+              return (
                 <button
-                  onClick={() => setProfileAdded(!profileAdded)}
-                  className={`w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
-                    profileAdded ? 'bg-[#1A1A1A] border-[#1A1A1A]' : 'border-[#C5C2BD] hover:border-[#8A8580]'
-                  }`}
+                  key={col.id}
+                  className="w-full flex items-center gap-3.5 px-5 py-3 hover:bg-[#EEEDEB] transition-colors"
+                  onClick={() => toggleCollection(col.id)}
                 >
-                  {profileAdded ? <Check size={14} className="text-white" /> : <Plus size={14} className="text-[#8A8580]" />}
+                  <div className="w-14 h-14 rounded-2xl flex-shrink-0 overflow-hidden" style={{ background: thumb }}>
+                    {col.coverImage && <img src={col.coverImage} alt="" className="w-full h-full object-cover" />}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[16px] font-semibold text-[#1A1A1A] truncate">{col.title}</p>
+                    <p className="text-[14px] text-[#B0ADA8]">
+                      {col.collectionType}
+                      {col.privacy && <span> · {col.privacy}</span>}
+                    </p>
+                  </div>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isAdded ? 'bg-[#1A1A1A]' : 'border border-[#C5C2BD] hover:border-[#999]'
+                    }`}
+                  >
+                    {isAdded ? <Check size={18} className="text-white" /> : <Plus size={18} strokeWidth={1.5} className="text-[#B0ADA8]" />}
+                  </div>
+                </button>
+              )
+            })}
+
+            {/* New Collection */}
+            <button
+              className="w-full flex items-center gap-3.5 px-5 py-3 hover:bg-[#EEEDEB] transition-colors"
+              onClick={() => setShowNewChoice(!showNewChoice)}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#1A1A1A] flex items-center justify-center flex-shrink-0">
+                <Plus size={20} className="text-white" strokeWidth={2.5} />
+              </div>
+              <p className="text-[16px] font-semibold text-[#1A1A1A]">New Collection</p>
+            </button>
+
+            {showNewChoice && (
+              <div className="mx-5 mb-3 bg-[#E5E2DD] rounded-xl overflow-hidden">
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#DAD7D2] transition-colors"
+                  onClick={() => { setShowNewChoice(false); setShowNewModal('dreamboard') }}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-[#D5D2CD] flex items-center justify-center flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+                      <rect x="3" y="3" width="16" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.6"/>
+                      <path d="M3 14L7.5 10L11 13L14.5 9.5L19 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[13px] font-semibold text-[#1A1A1A]">Dreamboard</p>
+                    <p className="text-[11px] text-[#8A8580]">A curated collection of inspiration</p>
+                  </div>
+                </button>
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#DAD7D2] transition-colors"
+                  onClick={() => { setShowNewChoice(false); setShowNewModal('room') }}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-[#D5D2CD] flex items-center justify-center flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
+                      <path d="M3 18V8L11 3L19 8V18H3Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                      <rect x="8" y="12" width="6" height="6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[13px] font-semibold text-[#1A1A1A]">Room</p>
+                    <p className="text-[11px] text-[#8A8580]">Design a room with products</p>
+                  </div>
                 </button>
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* ── Rooms section ── */}
-              <div className="px-5 pt-1 pb-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Home size={13} className="text-[#8A8580]" />
-                  <span className="text-[12px] text-[#8A8580] font-semibold uppercase tracking-wider">Add to Room</span>
-                </div>
-                <p className="text-[11px] text-[#A8A29E] mb-2">Places this product in your room design</p>
-              </div>
+        {/* Bottom bar */}
+        <div className="flex items-center justify-between bg-[#6B6B6B] px-5 py-3.5 rounded-b-2xl">
+          <button className="flex items-center gap-1.5 text-white text-[14px] font-semibold">
+            Profile (Public)
+            <ChevronDown size={14} className="text-white/60" />
+          </button>
+          <button
+            className="w-10 h-10 rounded-full bg-[#555] flex items-center justify-center hover:bg-[#4A4A4A] transition-colors"
+            onClick={onClose}
+          >
+            <Check size={18} strokeWidth={2.5} className="text-white" />
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
 
-              <div className="pb-2">
-                {rooms.map((room) => (
-                  <button
-                    key={room.id}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[#F5F3F0] transition-colors"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleRoom(room.id) }}
-                  >
-                    <div
-                      className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-end p-1.5"
-                      style={{ background: room.canvasColor }}
-                    >
-                      <span className="text-[8px] font-medium text-white/80 bg-black/30 px-1.5 py-0.5 rounded">Room</span>
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[14px] font-bold text-[#1A1A1A] truncate">{room.title}</p>
-                      <p className="text-[12px] text-[#A8A29E]">{room.timestamp}</p>
-                    </div>
-                    <div
-                      className={`w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-all ${
-                        addedToRoomId === room.id
-                          ? 'bg-[#1A1A1A] border-[#1A1A1A] scale-110'
-                          : 'border-[#C5C2BD] hover:border-[#8A8580]'
-                      }`}
-                    >
-                      {addedToRoomId === room.id ? (
-                        <Check size={14} className="text-white" />
-                      ) : (
-                        <RoomIcon size={14} />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+// ── Product Card ──
+export default memo(function ProductCard({ product, showInfo }) {
+  const { id, title, gradient, image, aspectRatio, retailer, price } = product
+  const [saved, setSaved] = useState(false)
+  const [showPanel, setShowPanel] = useState(false)
+  const cardRef = useRef(null)
+  const [anchorRect, setAnchorRect] = useState(null)
 
-              {/* Divider */}
-              <div className="mx-5 border-t border-[#EEEDEB]" />
+  const domain = retailer.toLowerCase().replace(/\s+/g, '').replace(/'/g, '') + '.com'
 
-              {/* ── Dreamboards section ── */}
-              <div className="px-5 pt-3 pb-1">
-                <span className="text-[12px] text-[#8A8580] font-semibold uppercase tracking-wider">Dreamboards</span>
-              </div>
+  const imageStyle = useMemo(() => ({ aspectRatio: aspectRatio || '1/1' }), [aspectRatio])
+  const gradientStyle = useMemo(() => ({ background: gradient, aspectRatio: aspectRatio || '1/1' }), [gradient, aspectRatio])
 
-              <div className="pb-1">
-                {dreamboards.map((board) => (
-                  <button
-                    key={board.id}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-[#F5F3F0] transition-colors"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDreamboard(board.id) }}
-                  >
-                    <div
-                      className="w-12 h-12 rounded-2xl flex-shrink-0"
-                      style={{
-                        background: board.thumbnails.length > 0
-                          ? board.thumbnails[0]
-                          : 'linear-gradient(135deg, #E5E2DD, #D5D2CD)',
-                      }}
-                    />
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="text-[14px] font-bold text-[#1A1A1A] truncate">{board.title}</p>
-                      <p className="text-[12px] text-[#A8A29E]">{board.timestamp}</p>
-                    </div>
-                    <div
-                      className={`w-8 h-8 rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0 transition-colors ${
-                        addedToIds.has(board.id)
-                          ? 'bg-[#1A1A1A] border-[#1A1A1A]'
-                          : 'border-[#C5C2BD] hover:border-[#8A8580]'
-                      }`}
-                    >
-                      {addedToIds.has(board.id) ? (
-                        <Check size={14} className="text-white" />
-                      ) : (
-                        <Plus size={14} className="text-[#8A8580]" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+  function openPanel(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (cardRef.current) {
+      setAnchorRect(cardRef.current.getBoundingClientRect())
+    }
+    setShowPanel(true)
+  }
+
+  return (
+    <>
+      <Link to={`/product/${id}`} className="group block mb-[16px] break-inside-avoid">
+        <div ref={cardRef} className="relative rounded-[4px] overflow-hidden">
+          {image ? (
+            <img src={image} alt={title} className="w-full object-cover" style={imageStyle} loading="lazy" decoding="async" />
+          ) : (
+            <div className="w-full" style={gradientStyle} />
+          )}
+
+          {/* Hover overlay */}
+          <>
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/40 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
 
-            {/* Bottom bar */}
-            <div className="flex items-center justify-between bg-[#555]/90 backdrop-blur-md px-4 py-3">
-              <button className="flex items-center gap-1.5 text-white text-[13px] font-semibold">
-                Profile (Public)
-                <ChevronDown size={14} className="text-white/70" />
-              </button>
-              <button
-                className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
-                onClick={() => setShowPanel(false)}
-              >
-                <Plus size={18} strokeWidth={2.2} className="text-[#1A1A1A]" />
-              </button>
+            {/* Top-left: board name → opens picker */}
+            <button
+              className="absolute top-3 left-3 flex items-center gap-1 text-white text-[13px] font-semibold drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+              onClick={openPanel}
+            >
+              Profile (Public)
+              <ChevronDown size={14} />
+            </button>
+
+            {/* Top-right: + / ✓ */}
+            <button
+              className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 ${
+                saved ? 'bg-[#555]' : 'bg-white hover:scale-105'
+              }`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSaved(!saved) }}
+            >
+              {saved
+                ? <Check size={18} strokeWidth={2.5} className="text-white" />
+                : <Plus size={18} strokeWidth={2.2} className="text-[#1A1A1A]" />
+              }
+            </button>
+
+            {/* Bottom-right: source domain */}
+            <div className="absolute bottom-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 max-w-[calc(100%-60px)]">
+              <div className="bg-[#1A1A1A]/50 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center">
+                <span className="text-white text-[12px] font-medium leading-none truncate">{domain}</span>
+              </div>
             </div>
+          </>
+
+          {/* Price bubble */}
+          {price && (
+            <div className="absolute bottom-2.5 left-2.5 bg-[#1A1A1A]/50 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center z-[5]">
+              <span className="text-white text-[12px] font-medium leading-none">${price.toLocaleString()}</span>
+            </div>
+          )}
+        </div>
+
+        {showInfo && (
+          <div className="mt-1.5 px-0.5">
+            <p className="text-[13px] text-[#6B6B6B] truncate flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 opacity-60">
+                <path d="M6.5 3.5H4.5C3.95 3.5 3.5 3.95 3.5 4.5V11.5C3.5 12.05 3.95 12.5 4.5 12.5H11.5C12.05 12.5 12.5 12.05 12.5 11.5V9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                <path d="M7.5 8.5L12.5 3.5M12.5 3.5H9.5M12.5 3.5V6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {title} – {retailer}
+            </p>
           </div>
         )}
-      </div>
+      </Link>
 
-      {/* Optional info row below card (for link-type elements) */}
-      {showInfo && (
-        <div className="mt-1.5 px-0.5">
-          <p className="text-[13px] text-[#6B6B6B] truncate flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 opacity-60">
-              <path d="M6.5 3.5H4.5C3.95 3.5 3.5 3.95 3.5 4.5V11.5C3.5 12.05 3.95 12.5 4.5 12.5H11.5C12.05 12.5 12.5 12.05 12.5 11.5V9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              <path d="M7.5 8.5L12.5 3.5M12.5 3.5H9.5M12.5 3.5V6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {title} – {retailer}
-          </p>
-        </div>
+      {/* Collection picker — portaled to body, floats outside the card */}
+      {showPanel && anchorRect && (
+        <CollectionPicker
+          anchorRect={anchorRect}
+          onClose={() => setShowPanel(false)}
+        />
       )}
-    </Link>
+    </>
   )
 })

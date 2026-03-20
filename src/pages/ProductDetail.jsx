@@ -2,6 +2,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { ChevronLeft, ChevronDown, Plus, MoreHorizontal, ArrowUp, Check } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
+import MasonrySentinel from '../components/MasonrySentinel'
+import useVisibleItems from '../hooks/useVisibleItems'
 import { mockProducts } from '../data/mockData'
 
 // Mock connections data
@@ -169,6 +171,9 @@ export default function ProductDetail() {
     [product]
   )
 
+  // Incremental rendering for similar products grid
+  const { visibleItems: visibleSimilar, hasMore: hasMoreSimilar, sentinelRef: similarSentinelRef } = useVisibleItems(similar, { initialCount: 15, batchSize: 10 })
+
   // Color dots from thumbnails (memoized)
   const colorDots = useMemo(
     () => product && product.thumbnails
@@ -233,10 +238,11 @@ export default function ProductDetail() {
         </button>
 
         {/* Masonry grid */}
-        <div className="px-[52px] py-8 columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 2000px' }}>
-          {similar.map((p) => (
+        <div className="px-[52px] py-8 columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-4">
+          {visibleSimilar.map((p) => (
             <ProductCard key={p.id} product={p} />
           ))}
+          <MasonrySentinel sentinelRef={similarSentinelRef} hasMore={hasMoreSimilar} />
         </div>
 
         {/* Back to top */}
