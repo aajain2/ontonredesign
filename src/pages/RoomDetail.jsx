@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { ChevronLeft, MoreHorizontal, Plus, Check } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { ChevronLeft, MoreHorizontal, Plus, Check, X } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import { mockRoomImages, mockSurfaces, mockProducts } from '../data/mockData'
 
@@ -40,8 +40,14 @@ export default function RoomDetail() {
     if (surface) room = surfaceToRoom(surface)
   }
 
+  const surface = mockSurfaces.find((s) => s.id === numId)
   const [following, setFollowing] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [removedIds, setRemovedIds] = useState([])
+
+  const handleRemoveProduct = useCallback((productId) => {
+    setRemovedIds((prev) => [...prev, productId])
+  }, [])
 
   if (!room) {
     return (
@@ -51,7 +57,17 @@ export default function RoomDetail() {
     )
   }
 
-  const products = getProductsForRoom(room.id)
+  // Use productIds from surface if available, otherwise fallback
+  const allProducts = surface?.productIds
+    ? surface.productIds.map((pid) => mockProducts.find((p) => p.id === pid)).filter(Boolean)
+    : getProductsForRoom(room.id)
+  const products = allProducts.filter((p) => !removedIds.includes(p.id))
+
+  // Dynamic cover: if key product is removed, show alt cover
+  const keyRemoved = surface?.keyProductId && removedIds.includes(surface.keyProductId)
+  const currentCover = keyRemoved && surface?.coverImageAlt
+    ? surface.coverImageAlt
+    : room.image
   const followerCount = 120 + (room.id * 13) % 5000
 
   return (
@@ -68,7 +84,8 @@ export default function RoomDetail() {
         {/* Room cover image */}
         <div className="mb-8 rounded-2xl overflow-hidden">
           <img
-            src={room.image}
+            key={currentCover}
+            src={currentCover}
             alt={room.room}
             className="w-full object-cover"
             style={{ maxHeight: '560px' }}
@@ -130,8 +147,15 @@ export default function RoomDetail() {
 
         <div className="flex flex-wrap justify-center gap-[16px]">
           {products.map((product) => (
-            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px]">
+            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px] relative group/card">
               <ProductCard product={product} />
+              <button
+                onClick={() => handleRemoveProduct(product.id)}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                title="Remove from this room"
+              >
+                <X size={14} />
+              </button>
             </div>
           ))}
         </div>

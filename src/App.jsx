@@ -61,7 +61,7 @@ function PageLoader() {
 
 function App() {
   const location = useLocation()
-  const isMarketing = marketingRoutes.some((r) => location.pathname.startsWith(r))
+  const isMarketing = marketingRoutes.some((r) => location.pathname === r || (location.pathname.startsWith(r + '/')))
 
   if (isMarketing) {
     return (
