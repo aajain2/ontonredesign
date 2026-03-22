@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, ChevronDown, Check } from 'lucide-react'
 import { mockSurfaces } from '../data/mockData'
 import NewClusterModal from './NewClusterModal'
@@ -14,6 +14,7 @@ const allCollections = mockSurfaces.map((s) => ({
 // ── Floating collection picker (portaled to body) ──
 function CollectionPicker({ anchorRect, onClose }) {
   const ref = useRef(null)
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [addedToIds, setAddedToIds] = useState(new Set())
   const [profileAdded, setProfileAdded] = useState(false)
@@ -187,7 +188,7 @@ function CollectionPicker({ anchorRect, onClose }) {
                 </button>
                 <button
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#DAD7D2] transition-colors"
-                  onClick={() => { setShowNewChoice(false); setShowNewModal('room') }}
+                  onClick={() => { onClose(); navigate('/imagine-app') }}
                 >
                   <div className="w-9 h-9 rounded-lg bg-[#D5D2CD] flex items-center justify-center flex-shrink-0">
                     <svg width="16" height="16" viewBox="0 0 22 22" fill="none">

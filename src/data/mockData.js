@@ -78,6 +78,7 @@ export const mockProducts = [
   { id: 49, title: 'Wave Colorblock Throw Pillow', retailer: 'Ferm Living', price: 95, category: 'Decor & Accessories', image: '/images/products/product-49.jpg', aspectRatio: '1/1', description: 'Playful colorblock throw pillow with wave motif.' },
   { id: 50, title: 'Tonal Quadrant Canvas Painting', retailer: '1st Dibs', price: 2800, category: 'Wall Art & Mirrors', image: '/images/products/product-50.jpg', aspectRatio: '4/5', description: 'Large tonal abstract canvas with quadrant composition.' },
   { id: 51, title: 'Quilted Patchwork Pillow & Herringbone Throw Set', retailer: 'Pottery Barn', price: 265, category: 'Rugs & Textiles', image: '/images/products/product-51.jpg', aspectRatio: '4/5', description: 'Quilted patchwork pillow paired with a herringbone throw.' },
+  { id: 52, title: 'B&B Italia Camaleonda Sectional in Green', retailer: 'B&B Italia', price: 14500, category: 'Furniture', image: '/images/bb-italia-green-sofa.webp', aspectRatio: '4/3', description: 'Iconic Mario Bellini Camaleonda modular sofa in sage green velvet. Fully customizable sectional configuration.' },
 ];
 
 
@@ -104,9 +105,12 @@ export const mockSurfaces = [
     type: 'room',
     username: '@alex',
     avatar: '/images/alex-avatar.jpg',
-    thumbnails: [],
+    thumbnails: ['/images/bb-italia-green-sofa.webp'],
     canvasColor: 'linear-gradient(135deg, #DEB887 0%, #C4A06A 100%)',
     coverImage: '/images/alex-room.jpg',
+    coverImageAlt: '/images/alex-room-no-sofa.png',
+    keyProductId: 52,
+    productIds: [52, 4, 19, 26, 33],
   },
   {
     id: 4,
@@ -146,6 +150,18 @@ export const mockSurfaces = [
       '/images/products/product-36.jpg',
     ],
     productIds: [4, 19, 36],
+  },
+  {
+    id: 9,
+    title: 'My Room',
+    timestamp: '3 hours ago',
+    type: 'room',
+    username: '@aayush',
+    avatar: '/images/aayush-avatar.jpg',
+    thumbnails: [],
+    canvasColor: 'linear-gradient(135deg, #C4A87C 0%, #A08860 100%)',
+    coverImage: '/images/aayush-room.jpg',
+    productIds: [6, 9, 15, 22, 34],
   },
 ];
 

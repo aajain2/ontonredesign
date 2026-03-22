@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Bookmark, Zap, MoreHorizontal } from 'lucide-react'
 import { LogoIcon } from './Logo'
 import SearchBar from './SearchBar'
@@ -240,7 +240,7 @@ function ActivityDropdown({ onClose }) {
 }
 
 // Create menu items
-function CreateMenu({ onClose, onNewCluster, onImport }) {
+function CreateMenu({ onClose, onNewCluster, onImport, onNewRoom }) {
   const ref = useRef(null)
   const [visible, setVisible] = useState(false)
 
@@ -263,7 +263,7 @@ function CreateMenu({ onClose, onNewCluster, onImport }) {
     { title: 'New Dreamboard', desc: 'A collection of products and rooms', action: onNewCluster, icon: (
       <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="16" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.6"/><path d="M3 14L7.5 10L11 13L14.5 9.5L19 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="8" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.3"/></svg>
     )},
-    { title: 'New Room', desc: 'Design or furnish a room with products', action: onClose, icon: (
+    { title: 'New Room', desc: 'Design or furnish a room with products', action: onNewRoom, icon: (
       <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><path d="M3 18V8L11 3L19 8V18H3Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/><rect x="8" y="12" width="6" height="6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
     )},
     { title: 'Import', desc: 'From Pinterest or Arena', action: onImport, icon: (
@@ -309,6 +309,7 @@ function CreateMenu({ onClose, onNewCluster, onImport }) {
 
 export default function AppNavbar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showNewCluster, setShowNewCluster] = useState(false)
@@ -374,6 +375,10 @@ export default function AppNavbar() {
                 onNewCluster={() => {
                   setShowCreate(false)
                   setShowNewCluster(true)
+                }}
+                onNewRoom={() => {
+                  setShowCreate(false)
+                  navigate('/imagine-app')
                 }}
                 onImport={() => {
                   setShowCreate(false)

@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
-import { useState } from 'react'
-import { MoreHorizontal } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { MoreHorizontal, X } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import { mockSurfaces, mockProducts } from '../data/mockData'
 
@@ -8,6 +8,11 @@ export default function SurfaceDetail() {
   const { id } = useParams()
   const surface = mockSurfaces.find((s) => s.id === Number(id))
   const [following, setFollowing] = useState(false)
+  const [removedIds, setRemovedIds] = useState([])
+
+  const handleRemoveProduct = useCallback((productId) => {
+    setRemovedIds((prev) => [...prev, productId])
+  }, [])
 
   if (!surface) {
     return (
@@ -21,9 +26,17 @@ export default function SurfaceDetail() {
   const typeLabel = isRoom ? 'Room' : 'Dreamboard'
 
   // Use specific product IDs if available, otherwise fallback
-  const surfaceProducts = surface.productIds
-    ? surface.productIds.map((pid) => mockProducts.find((p) => p.id === pid)).filter(Boolean)
-    : mockProducts.slice(0, 15)
+  const allProductIds = surface.productIds || mockProducts.slice(0, 15).map((p) => p.id)
+  const activeProductIds = allProductIds.filter((pid) => !removedIds.includes(pid))
+  const surfaceProducts = activeProductIds
+    .map((pid) => mockProducts.find((p) => p.id === pid))
+    .filter(Boolean)
+
+  // Dynamic cover: if key product is removed, show alt cover
+  const keyRemoved = surface.keyProductId && removedIds.includes(surface.keyProductId)
+  const currentCover = keyRemoved && surface.coverImageAlt
+    ? surface.coverImageAlt
+    : surface.coverImage
 
   const followerCount = 42 + surface.id * 7
 
@@ -39,7 +52,7 @@ export default function SurfaceDetail() {
             {surface.title}
           </h1>
           <p className="text-[14px] text-[#8A8580]">
-            {followerCount} Followers · {surface.username}
+            {typeLabel} · {followerCount} Followers · {surface.username}
           </p>
 
           {/* Avatar */}
@@ -72,21 +85,34 @@ export default function SurfaceDetail() {
         </div>
 
         {/* Room cover image (only for rooms) */}
-        {isRoom && surface.coverImage && (
+        {isRoom && currentCover && (
           <div className="mb-10 rounded-2xl overflow-hidden">
             <img
-              src={surface.coverImage}
+              key={currentCover}
+              src={currentCover}
               alt={surface.title}
               className="w-full object-cover"
-              style={{ maxHeight: '500px' }}
+              style={{
+                maxHeight: '500px',
+                transition: 'opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+              }}
             />
           </div>
         )}
 
         {/* Products grid */}
-        <div className="columns-2 sm:columns-3 md:columns-4 gap-[16px]">
+        <div className="flex flex-wrap justify-center gap-[16px]">
           {surfaceProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px] relative group/card">
+              <ProductCard product={product} />
+              <button
+                onClick={() => handleRemoveProduct(product.id)}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-black/70 z-10"
+                title="Remove from this board"
+              >
+                <X size={14} />
+              </button>
+            </div>
           ))}
         </div>
       </div>

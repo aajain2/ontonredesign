@@ -128,9 +128,11 @@ export default function RoomDetail() {
           </h2>
         </div>
 
-        <div className="columns-2 sm:columns-3 md:columns-4 gap-[16px]">
+        <div className="flex flex-wrap justify-center gap-[16px]">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px]">
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
       </div>
