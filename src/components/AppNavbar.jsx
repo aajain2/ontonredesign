@@ -11,9 +11,7 @@ const SettingsModal = lazy(() => import('./SettingsModal'))
 const NewClusterModal = lazy(() => import('./NewClusterModal'))
 
 const navLinks = [
-  { name: 'For You', path: '/' },
-  { name: 'Following', path: '/following' },
-  { name: 'Explore', path: '/explore' },
+  { name: 'Explore', path: '/' },
 ]
 
 // Pre-compute filtered data at module level (static data)
