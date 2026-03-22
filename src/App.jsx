@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import ScrollToTop from './components/ScrollToTop'
+import { CollectionProvider } from './context/CollectionContext'
 
 // Critical layout components (not lazy — needed immediately)
 import Navbar from './components/Navbar'
@@ -95,24 +96,26 @@ function App() {
 
   // App layout (logged-in)
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-app)' }}>
-      <ScrollToTop />
-      <AppNavbar />
-      <main className="flex-1 flex flex-col min-w-0">
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/surface/:id" element={<SurfaceDetail />} />
-            <Route path="/room/:id" element={<RoomDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/gather" element={<Dashboard />} />
-            <Route path="/imagine-app" element={<ImagineRoom />} />
-          </Routes>
-        </Suspense>
-      </main>
-    </div>
+    <CollectionProvider>
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--bg-app)' }}>
+        <ScrollToTop />
+        <AppNavbar />
+        <main className="flex-1 flex flex-col min-w-0">
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/surface/:id" element={<SurfaceDetail />} />
+              <Route path="/room/:id" element={<RoomDetail />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/gather" element={<Dashboard />} />
+              <Route path="/imagine-app" element={<ImagineRoom />} />
+            </Routes>
+          </Suspense>
+        </main>
+      </div>
+    </CollectionProvider>
   )
 }
 

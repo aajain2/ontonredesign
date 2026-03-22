@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react'
 import { MoreHorizontal, X } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import { mockSurfaces, mockProducts } from '../data/mockData'
+import { useCollections } from '../context/CollectionContext'
 
 export default function SurfaceDetail() {
   const { id } = useParams()
@@ -10,9 +11,8 @@ export default function SurfaceDetail() {
   const [following, setFollowing] = useState(false)
   const [removedIds, setRemovedIds] = useState([])
 
-  const handleRemoveProduct = useCallback((productId) => {
-    setRemovedIds((prev) => [...prev, productId])
-  }, [])
+  // Dynamic cover: swap when key product is removed OR added via collection picker
+  const { isInCollection, removeFromCollection } = useCollections()
 
   if (!surface) {
     return (
@@ -25,16 +25,28 @@ export default function SurfaceDetail() {
   const isRoom = surface.type === 'room'
   const typeLabel = isRoom ? 'Room' : 'Dreamboard'
 
+  const keyAdded = surface.keyProductId && isInCollection(surface.id, surface.keyProductId)
+  const keyOriginallyInSurface = surface.keyProductId && surface.productIds?.includes(surface.keyProductId)
+  const keyRemoved = keyOriginallyInSurface && removedIds.includes(surface.keyProductId)
+
   // Use specific product IDs if available, otherwise fallback
-  const allProductIds = surface.productIds || mockProducts.slice(0, 15).map((p) => p.id)
+  const baseProductIds = surface.productIds || mockProducts.slice(0, 15).map((p) => p.id)
+  // Include key product when added via collection picker
+  const allProductIds = keyAdded && surface.keyProductId && !baseProductIds.includes(surface.keyProductId)
+    ? [surface.keyProductId, ...baseProductIds]
+    : baseProductIds
   const activeProductIds = allProductIds.filter((pid) => !removedIds.includes(pid))
   const surfaceProducts = activeProductIds
     .map((pid) => mockProducts.find((p) => p.id === pid))
     .filter(Boolean)
 
-  // Dynamic cover: if key product is removed, show alt cover
-  const keyRemoved = surface.keyProductId && removedIds.includes(surface.keyProductId)
-  const currentCover = keyRemoved && surface.coverImageAlt
+  const handleRemoveProduct = useCallback((productId) => {
+    setRemovedIds((prev) => [...prev, productId])
+    if (surface.keyProductId === productId) {
+      removeFromCollection(surface.id, productId)
+    }
+  }, [surface, removeFromCollection])
+  const currentCover = (keyRemoved || keyAdded) && surface.coverImageAlt
     ? surface.coverImageAlt
     : surface.coverImage
 
@@ -101,19 +113,12 @@ export default function SurfaceDetail() {
         )}
 
         {/* Products grid */}
-        <div className="flex flex-wrap justify-center gap-[16px]">
-          {surfaceProducts.map((product) => (
-            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px] relative group/card">
-              <ProductCard product={product} />
-              <button
-                onClick={() => handleRemoveProduct(product.id)}
-                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                title="Remove from this board"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
+        <div className="text-center">
+          <div className="inline-block text-left columns-2 sm:columns-3 gap-[16px]">
+            {surfaceProducts.map((product) => (
+              <ProductCard key={product.id} product={product} onRemove={handleRemoveProduct} collectionName={surface.title} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { memo, useMemo, useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { MoreHorizontal, Bookmark, Link as LinkIcon } from 'lucide-react'
+import { useCollections } from '../context/CollectionContext'
 
 function CardMenu({ type, onClose }) {
   const ref = useRef(null)
@@ -38,6 +39,13 @@ function CardMenu({ type, onClose }) {
 export default memo(function SurfaceCard({ surface }) {
   const { title, type, thumbnails, canvasColor, username, avatar } = surface
   const [showMenu, setShowMenu] = useState(false)
+  const { isInCollection } = useCollections()
+
+  // Swap cover image when key product is added to this room
+  const keyProductAdded = surface.keyProductId && isInCollection(surface.id, surface.keyProductId)
+  const activeCoverImage = keyProductAdded && surface.coverImageAlt
+    ? surface.coverImageAlt
+    : surface.coverImage
 
   const hasImageThumbnails = thumbnails && thumbnails.length >= 3 && thumbnails[0].startsWith('/')
 
@@ -58,8 +66,8 @@ export default memo(function SurfaceCard({ surface }) {
         className="w-full aspect-[4/3] rounded-[8px] overflow-hidden relative"
         style={{ background: hasImageThumbnails ? undefined : coverBg }}
       >
-        {surface.coverImage ? (
-          <img src={surface.coverImage} alt={title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+        {activeCoverImage ? (
+          <img src={activeCoverImage} alt={title} className="w-full h-full object-cover transition-opacity duration-500" loading="lazy" decoding="async" />
         ) : hasImageThumbnails ? (
           <div className="flex gap-[2px] w-full h-full">
             <div className="flex-[2] h-full">

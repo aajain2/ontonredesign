@@ -1,42 +1,42 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Upload, Image, ArrowRight, X, Sparkles } from 'lucide-react'
+import { ChevronDown, X, ArrowRight } from 'lucide-react'
 
-const roomTypes = [
-  'Empty room', 'Living room', 'Bedroom', 'Kitchen', 'Dining room',
-  'Bathroom', 'Home office', 'Nursery', 'Patio', 'Attic',
-  'Basement', 'Garage', 'Hallway', 'Sunroom', 'Mudroom',
+const roomModes = [
+  { id: 'empty', label: 'Empty room', desc: 'Generate a room from scratch' },
+  { id: 'furnish', label: 'Furnish my room', desc: 'Upload a photo and redesign it' },
 ]
 
 const interiorStyles = [
   { name: 'Minimalist', image: '/images/rooms/living-room/living-room-01.jpg' },
   { name: 'Scandinavian', image: '/images/rooms/living-room/living-room-02.jpg' },
-  { name: 'Modern Minimalist', image: '/images/rooms/living-room/living-room-03.jpg' },
+  { name: 'Japandi', image: '/images/rooms/living-room/living-room-03.jpg' },
   { name: 'Bohemian', image: '/images/rooms/living-room/living-room-04.jpg' },
   { name: 'Mid-Century Modern', image: '/images/rooms/living-room/living-room-05.jpg' },
-  { name: 'Japandi', image: '/images/rooms/living-room/living-room-06.jpg' },
-  { name: 'Industrial', image: '/images/rooms/living-room/living-room-07.jpg' },
-  { name: 'Art Deco', image: '/images/rooms/living-room/living-room-08.jpg' },
-  { name: 'Coastal', image: '/images/rooms/living-room/living-room-09.jpg' },
-  { name: 'Farmhouse', image: '/images/rooms/living-room/living-room-10.jpg' },
-  { name: 'Mediterranean', image: '/images/rooms/living-room/living-room-11.jpg' },
-  { name: 'Traditional', image: '/images/rooms/living-room/living-room-12.jpg' },
-  { name: 'Transitional', image: '/images/rooms/living-room/living-room-13.jpg' },
-  { name: 'Contemporary', image: '/images/rooms/living-room/living-room-14.jpg' },
-  { name: 'Rustic', image: '/images/rooms/living-room/living-room-15.jpg' },
-  { name: 'Wabi-Sabi', image: '/images/rooms/living-room/living-room-16.jpg' },
-  { name: 'Tropical', image: '/images/rooms/living-room/living-room-17.jpg' },
-  { name: 'French Country', image: '/images/rooms/living-room/living-room-18.jpg' },
-  { name: 'Hollywood Regency', image: '/images/rooms/living-room/living-room-19.jpg' },
-  { name: 'Biophilic', image: '/images/rooms/living-room/living-room-20.jpg' },
+  { name: 'Industrial', image: '/images/rooms/living-room/living-room-06.jpg' },
+  { name: 'Art Deco', image: '/images/rooms/living-room/living-room-07.jpg' },
+  { name: 'Coastal', image: '/images/rooms/living-room/living-room-08.jpg' },
+  { name: 'Farmhouse', image: '/images/rooms/living-room/living-room-09.jpg' },
+  { name: 'Mediterranean', image: '/images/rooms/living-room/living-room-10.jpg' },
+  { name: 'Traditional', image: '/images/rooms/living-room/living-room-11.jpg' },
+  { name: 'Contemporary', image: '/images/rooms/living-room/living-room-12.jpg' },
+  { name: 'Rustic', image: '/images/rooms/living-room/living-room-13.jpg' },
+  { name: 'Wabi-Sabi', image: '/images/rooms/living-room/living-room-14.jpg' },
+  { name: 'Tropical', image: '/images/rooms/living-room/living-room-15.jpg' },
+  { name: 'French Country', image: '/images/rooms/living-room/living-room-16.jpg' },
+  { name: 'Hollywood Regency', image: '/images/rooms/living-room/living-room-17.jpg' },
+  { name: 'Biophilic', image: '/images/rooms/living-room/living-room-18.jpg' },
+  { name: 'Transitional', image: '/images/rooms/living-room/living-room-19.jpg' },
+  { name: 'Modern Farmhouse', image: '/images/rooms/living-room/living-room-20.jpg' },
 ]
 
 export default function ImagineRoom() {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
 
-  const [roomType, setRoomType] = useState('Empty room')
-  const [showRoomDropdown, setShowRoomDropdown] = useState(false)
+  const [roomMode, setRoomMode] = useState('empty')
+  const [showModeDropdown, setShowModeDropdown] = useState(false)
+  const modeLabel = roomModes.find((m) => m.id === roomMode)?.label || 'Empty room'
   const [selectedStyle, setSelectedStyle] = useState(null)
   const [prompt, setPrompt] = useState('')
   const [uploadedImage, setUploadedImage] = useState(null)
@@ -45,95 +45,81 @@ export default function ImagineRoom() {
 
   function handleUpload(e) {
     const file = e.target.files?.[0]
-    if (file) {
-      const url = URL.createObjectURL(file)
-      setUploadedImage(url)
-    }
+    if (file) setUploadedImage(URL.createObjectURL(file))
   }
 
   function handleGenerate() {
     setIsGenerating(true)
-    // Simulate generation
-    setTimeout(() => {
-      setIsGenerating(false)
-      setGenerated(true)
-    }, 2500)
+    setTimeout(() => { setIsGenerating(false); setGenerated(true) }, 2500)
   }
 
-  function handleSaveToRooms() {
-    navigate('/profile')
-  }
-
-  // Generated result view
+  // ── Result view ──
   if (generated) {
-    const resultImage = selectedStyle?.image || '/images/rooms/living-room/living-room-05.jpg'
+    const img = selectedStyle?.image || '/images/rooms/living-room/living-room-05.jpg'
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="px-[52px] py-8">
-          {/* Back */}
+        <div className="px-[52px] pt-6 pb-16 max-w-[960px] mx-auto">
           <button
             onClick={() => setGenerated(false)}
-            className="text-[14px] text-[#8A8580] hover:text-[#1A1A1A] transition-colors mb-6"
+            className="text-[14px] text-[#8A8580] hover:text-[#1A1A1A] transition-colors mb-8 flex items-center gap-1"
           >
-            ← Back to editor
+            <ArrowRight size={14} className="rotate-180" /> Back
           </button>
 
-          <div className="max-w-[900px] mx-auto">
-            {/* Result image */}
-            <div className="rounded-2xl overflow-hidden mb-6">
-              <img src={resultImage} alt="Generated room" className="w-full aspect-[16/10] object-cover" />
-            </div>
+          <div className="rounded-xl overflow-hidden mb-8">
+            <img src={img} alt="Generated room" className="w-full aspect-[16/10] object-cover" />
+          </div>
 
-            {/* Info */}
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <h2
-                  className="text-[24px] text-[#1A1A1A] mb-1"
-                  style={{ fontFamily: 'var(--font-heading)', fontWeight: 400 }}
-                >
-                  {roomType} · {selectedStyle?.name || 'Custom'}
-                </h2>
-                <p className="text-[14px] text-[#8A8580]">
-                  {prompt || 'AI-generated room design'}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleGenerate}
-                  className="px-5 py-2.5 text-[14px] font-medium text-[#1A1A1A] border border-[#D5D2CD] rounded-full hover:bg-[#EEEDEB] transition-colors flex items-center gap-2"
-                >
-                  <Sparkles size={15} />
-                  Regenerate
-                </button>
-                <button
-                  onClick={handleSaveToRooms}
-                  className="px-5 py-2.5 text-[14px] font-medium text-white bg-[#1A1A1A] rounded-full hover:bg-[#333] transition-colors"
-                >
-                  Save to My Rooms
-                </button>
-              </div>
+          <div className="flex items-start justify-between mb-10">
+            <div>
+              <h2
+                className="text-[28px] text-[#1A1A1A] leading-tight"
+                style={{ fontFamily: 'var(--font-heading)', fontWeight: 400 }}
+              >
+                {selectedStyle?.name || 'Custom'} Room
+              </h2>
+              <p className="text-[14px] text-[#8A8580] mt-1">{prompt || 'AI-generated room design'}</p>
             </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setGenerated(false); handleGenerate() }}
+                className="px-5 py-2.5 text-[13px] font-medium text-[#1A1A1A] border border-[#D5D2CD] rounded-full hover:bg-[#EEEDEB] transition-colors"
+              >
+                Regenerate
+              </button>
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-5 py-2.5 text-[13px] font-medium text-white bg-[#1A1A1A] rounded-full hover:bg-[#333] transition-colors"
+              >
+                Save to My Rooms
+              </button>
+            </div>
+          </div>
 
-            {/* Products identified */}
-            <div className="border-t border-[#E5E2DD] pt-6">
-              <h3 className="text-[16px] font-semibold text-[#1A1A1A] mb-4">Products in this room</h3>
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                {[
-                  { name: 'Bouclé Sofa', price: 2950, img: '/images/products/product-46.jpg' },
-                  { name: 'Floor Lamp', price: 895, img: '/images/products/product-39.jpg' },
-                  { name: 'Side Table', price: 495, img: '/images/products/product-47.jpg' },
-                  { name: 'Area Rug', price: 695, img: '/images/products/product-26.jpg' },
-                  { name: 'Throw Pillow', price: 95, img: '/images/products/product-49.jpg' },
-                ].map((p, i) => (
-                  <div key={i} className="flex-shrink-0 w-[140px]">
-                    <div className="w-full aspect-square rounded-xl overflow-hidden mb-2">
-                      <img src={p.img} alt={p.name} className="w-full h-full object-cover" />
-                    </div>
-                    <p className="text-[13px] font-medium text-[#1A1A1A] truncate">{p.name}</p>
-                    <p className="text-[13px] text-[#8A8580]">${p.price.toLocaleString()}</p>
+          <div className="border-t border-[#E5E2DD] pt-8">
+            <h3
+              className="text-[18px] text-[#1A1A1A] mb-5"
+              style={{ fontFamily: 'var(--font-heading)', fontWeight: 400 }}
+            >
+              Products in this room
+            </h3>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {[
+                { name: 'Bouclé Club Chair', price: 2950, img: '/images/products/product-46.jpg' },
+                { name: 'Serpentine Floor Lamp', price: 895, img: '/images/products/product-39.jpg' },
+                { name: 'Resin Side Table', price: 495, img: '/images/products/product-47.jpg' },
+                { name: 'Wool Fringed Rug', price: 695, img: '/images/products/product-26.jpg' },
+                { name: 'Wave Throw Pillow', price: 95, img: '/images/products/product-49.jpg' },
+                { name: 'Ceramic Table Lamp', price: 520, img: '/images/products/product-18.jpg' },
+              ].map((p, i) => (
+                <div key={i} className="flex-shrink-0 w-[130px] cursor-pointer group">
+                  <div className="w-full aspect-[4/5] rounded-lg overflow-hidden mb-2">
+                    <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform" />
                   </div>
-                ))}
-              </div>
+                  <p className="text-[12px] font-medium text-[#1A1A1A] truncate">{p.name}</p>
+                  <p className="text-[12px] text-[#8A8580]">${p.price.toLocaleString()}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -141,171 +127,170 @@ export default function ImagineRoom() {
     )
   }
 
+  // ── Editor view ──
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="px-[52px] py-8">
-        <div className="max-w-[820px] mx-auto">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1
-              className="text-[36px] text-[#1A1A1A] mb-2"
-              style={{ fontFamily: 'var(--font-heading)', fontWeight: 400 }}
-            >
-              Reimagine your space
-            </h1>
-            <p className="text-[15px] text-[#8A8580]">
-              Generate a room from scratch or furnish your own
-            </p>
-          </div>
+      <div className="px-[52px] pt-16 pb-16">
+        <div className="max-w-[680px] mx-auto">
+          {/* Title */}
+          <h1
+            className="text-center text-[42px] text-[#1A1A1A] leading-[1.1] mb-3"
+            style={{ fontFamily: 'var(--font-heading)', fontWeight: 400 }}
+          >
+            Reimagine your space
+          </h1>
+          <p className="text-center text-[15px] text-[#8A8580] mb-16">
+            Generate a room from scratch or furnish your own
+          </p>
 
-          {/* Main card */}
-          <div className="bg-white rounded-2xl border border-[#E5E2DD] p-8 mb-8">
-            {/* Input row: Room upload + Style + Prompt */}
-            <div className="flex gap-4 mb-2">
-              {/* Upload / Room type box */}
-              <div className="flex flex-col items-center">
-                <div
-                  className="w-[120px] h-[100px] rounded-xl border-2 border-dashed border-[#D5D2CD] flex items-center justify-center cursor-pointer hover:border-[#8A8580] transition-colors overflow-hidden relative"
-                  onClick={() => fileInputRef.current?.click()}
+          {/* Three input slots */}
+          <div className="flex items-start gap-6 mb-4">
+            {/* 1. Room mode / Upload */}
+            <div className="flex flex-col items-center flex-1">
+              <div
+                className={`w-full aspect-square rounded-2xl border border-dashed flex items-center justify-center overflow-hidden relative group transition-colors ${
+                  roomMode === 'furnish'
+                    ? 'border-[#999] cursor-pointer hover:border-[#666]'
+                    : 'border-[#D0CDC8]'
+                }`}
+                onClick={() => roomMode === 'furnish' && fileInputRef.current?.click()}
+              >
+                {uploadedImage ? (
+                  <>
+                    <img src={uploadedImage} alt="" className="w-full h-full object-cover" />
+                    <button
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => { e.stopPropagation(); setUploadedImage(null) }}
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="text-[#B0ADA8]">
+                      <rect x="4" y="6" width="24" height="20" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="12" cy="14" r="2.5" stroke="currentColor" strokeWidth="1.3"/>
+                      <path d="M4 22L10 16.5L14 20L20 13L28 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      {roomMode === 'furnish' && (
+                        <>
+                          <circle cx="24" cy="10" r="3" fill="currentColor" opacity="0.15"/>
+                          <path d="M23 10H25M24 9V11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                        </>
+                      )}
+                    </svg>
+                    {roomMode === 'furnish' && (
+                      <span className="text-[11px] text-[#B0ADA8]">Upload photo</span>
+                    )}
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+              </div>
+              <div className="relative mt-3">
+                <button
+                  onClick={() => setShowModeDropdown(!showModeDropdown)}
+                  className="flex items-center gap-1 text-[13px] text-[#1A1A1A]"
                 >
-                  {uploadedImage ? (
-                    <>
-                      <img src={uploadedImage} alt="" className="w-full h-full object-cover" />
+                  {modeLabel} <ChevronDown size={12} />
+                </button>
+                {showModeDropdown && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-[#F5F3F0] rounded-xl shadow-lg py-1.5 w-[200px] z-20 border border-[#E5E2DD]">
+                    {roomModes.map((mode) => (
                       <button
-                        className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/50 flex items-center justify-center"
-                        onClick={(e) => { e.stopPropagation(); setUploadedImage(null) }}
+                        key={mode.id}
+                        onClick={() => {
+                          setRoomMode(mode.id)
+                          setShowModeDropdown(false)
+                          if (mode.id === 'empty') setUploadedImage(null)
+                        }}
+                        className={`w-full text-left px-4 py-2.5 hover:bg-[#EEEDEB] transition-colors ${
+                          roomMode === mode.id ? 'text-[#1A1A1A]' : 'text-[#8A8580]'
+                        }`}
                       >
-                        <X size={12} className="text-white" />
+                        <p className={`text-[13px] ${roomMode === mode.id ? 'font-medium' : ''}`}>{mode.label}</p>
+                        <p className="text-[11px] text-[#B0ADA8]">{mode.desc}</p>
                       </button>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-1">
-                      <Image size={24} className="text-[#8A8580]" />
-                      <Upload size={12} className="text-[#8A8580]" />
-                    </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleUpload}
-                  />
-                </div>
-                {/* Room type dropdown */}
-                <div className="relative mt-2">
-                  <button
-                    onClick={() => setShowRoomDropdown(!showRoomDropdown)}
-                    className="flex items-center gap-1 text-[13px] text-[#1A1A1A] font-medium"
-                  >
-                    {roomType}
-                    <ChevronDown size={13} />
-                  </button>
-                  {showRoomDropdown && (
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-xl shadow-lg border border-[#E5E2DD] py-1 w-[160px] z-20 max-h-[200px] overflow-y-auto">
-                      {roomTypes.map((rt) => (
-                        <button
-                          key={rt}
-                          onClick={() => { setRoomType(rt); setShowRoomDropdown(false) }}
-                          className={`w-full text-left px-4 py-2 text-[13px] hover:bg-[#F5F4F2] transition-colors ${
-                            roomType === rt ? 'text-[#1A1A1A] font-medium' : 'text-[#6B6B6B]'
-                          }`}
-                        >
-                          {rt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* Style slot */}
-              <div className="flex flex-col items-center">
-                <div className="w-[120px] h-[100px] rounded-xl border-2 border-dashed border-[#D5D2CD] flex items-center justify-center overflow-hidden">
-                  {selectedStyle ? (
-                    <img src={selectedStyle.image} alt={selectedStyle.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <ArrowRight size={24} className="text-[#8A8580] rotate-90" />
-                  )}
-                </div>
-                <span className="text-[13px] text-[#8A8580] mt-2">Style</span>
+            {/* 2. Style */}
+            <div className="flex flex-col items-center flex-1">
+              <div className="w-full aspect-square rounded-2xl border border-dashed border-[#D0CDC8] flex items-center justify-center overflow-hidden">
+                {selectedStyle ? (
+                  <img src={selectedStyle.image} alt={selectedStyle.name} className="w-full h-full object-cover" />
+                ) : (
+                  <ArrowRight size={28} className="text-[#B0ADA8] rotate-90" />
+                )}
               </div>
+              <span className="text-[13px] text-[#8A8580] mt-3">Style</span>
+            </div>
 
-              {/* Prompt area */}
-              <div className="flex-1 flex flex-col">
-                <div className="flex-1 relative">
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe your dream space..."
-                    className="w-full h-[100px] bg-[#F5F4F2] rounded-xl px-4 py-3 text-[14px] text-[#1A1A1A] placeholder:text-[#B0ADA8] outline-none resize-none"
-                  />
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className="absolute bottom-3 right-3 px-4 py-1.5 bg-[#1A1A1A] text-white text-[13px] font-medium rounded-full hover:bg-[#333] transition-colors disabled:opacity-50"
-                  >
-                    {isGenerating ? 'Dreaming...' : 'Dream'}
-                  </button>
-                </div>
-                <span className="text-[13px] text-[#8A8580] mt-2 text-center">Prompt</span>
+            {/* 3. Prompt */}
+            <div className="flex flex-col flex-[1.8]">
+              <div className="relative w-full">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe what you want..."
+                  className="w-full aspect-square rounded-2xl bg-[#EEEDEB] px-5 py-4 text-[14px] text-[#1A1A1A] placeholder:text-[#B0ADA8] outline-none resize-none"
+                />
+                <button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="absolute bottom-4 right-4 px-5 py-2 bg-[#1A1A1A] text-white text-[13px] font-medium rounded-full hover:bg-[#333] transition-colors disabled:opacity-40"
+                >
+                  {isGenerating ? 'Dreaming...' : 'Dream'}
+                </button>
               </div>
+              <span className="text-[13px] text-[#8A8580] mt-3 text-center">Prompt</span>
             </div>
           </div>
+        </div>
 
-          {/* Pick your style */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] text-[#8A8580]">Pick your style</h3>
-              {selectedStyle && (
-                <span className="text-[14px] text-[#1A1A1A] font-medium">{selectedStyle.name}</span>
-              )}
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-              {interiorStyles.map((style) => (
+        {/* Style picker — full width */}
+        <div className="max-w-[960px] mx-auto mt-12">
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-[14px] text-[#8A8580]">Pick your style</span>
+            {selectedStyle && (
+              <span className="text-[13px] text-[#1A1A1A] font-medium">{selectedStyle.name}</span>
+            )}
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+            {interiorStyles.map((style) => {
+              const active = selectedStyle?.name === style.name
+              return (
                 <button
                   key={style.name}
-                  onClick={() => setSelectedStyle(selectedStyle?.name === style.name ? null : style)}
-                  className="flex-shrink-0 group/style"
+                  onClick={() => setSelectedStyle(active ? null : style)}
+                  className="flex-shrink-0"
                 >
-                  <div
-                    className={`w-[150px] h-[110px] rounded-xl overflow-hidden transition-all ${
-                      selectedStyle?.name === style.name
-                        ? 'ring-2 ring-[#1A1A1A] scale-[1.03]'
-                        : 'hover:scale-[1.02]'
-                    }`}
-                  >
-                    <img
-                      src={style.image}
-                      alt={style.name}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                  <div className={`w-[160px] h-[120px] rounded-xl overflow-hidden transition-all duration-300 ${
+                    active ? 'ring-[2px] ring-[#1A1A1A] ring-offset-2 ring-offset-[#F5F4F2]' : 'hover:opacity-90'
+                  }`}>
+                    <img src={style.image} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
-                  <p className={`text-[12px] mt-1.5 text-center transition-colors ${
-                    selectedStyle?.name === style.name ? 'text-[#1A1A1A] font-medium' : 'text-[#8A8580]'
+                  <p className={`text-[12px] mt-2 text-center transition-colors ${
+                    active ? 'text-[#1A1A1A] font-medium' : 'text-[#8A8580]'
                   }`}>
                     {style.name}
                   </p>
                 </button>
-              ))}
-            </div>
+              )
+            })}
           </div>
+        </div>
 
-          {/* Generate button — full width */}
+        {/* Generate */}
+        <div className="max-w-[680px] mx-auto mt-8">
           <button
             onClick={handleGenerate}
             disabled={isGenerating}
-            className="w-full py-4 bg-[#1A1A1A] text-white text-[15px] font-medium rounded-full hover:bg-[#333] transition-colors flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
+            className="w-full py-4 bg-[#1A1A1A] text-white text-[14px] font-medium rounded-full hover:bg-[#333] transition-colors flex items-center justify-center gap-2.5 disabled:opacity-40"
           >
-            {isGenerating ? (
-              <>Generating your space...</>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                Generate Room
-                <ArrowRight size={16} />
-              </>
+            {isGenerating ? 'Generating your space...' : (
+              <>Reimagine <ArrowRight size={15} /></>
             )}
           </button>
         </div>

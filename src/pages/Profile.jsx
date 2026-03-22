@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { MoreHorizontal } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import SurfaceCard from '../components/SurfaceCard'
@@ -11,8 +11,15 @@ import { mockProducts, mockSurfaces } from '../data/mockData'
 const bannerThumbnails = mockProducts.slice(0, 6)
 
 export default function Profile() {
-  const [activeTab, setActiveTab] = useState('elements')
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabParam === 'collections' ? 'collections' : 'elements')
   const [showBanner, setShowBanner] = useState(true)
+
+  useEffect(() => {
+    if (tabParam === 'collections') setActiveTab('collections')
+    else if (tabParam === 'elements') setActiveTab('elements')
+  }, [tabParam])
 
   const elementCount = mockProducts.length
   const dreamboards = useMemo(() => mockSurfaces.filter((s) => s.type === 'dreamboard'), [])
@@ -93,9 +100,6 @@ export default function Profile() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="px-5 py-2 text-[13px] font-medium text-[#1A1A1A] border border-[#D5D2CD] rounded-full hover:bg-[#EEEDEB] transition-colors">
-              Organize
-            </button>
             <button className="w-9 h-9 flex items-center justify-center border border-[#D5D2CD] rounded-full hover:bg-[#EEEDEB] transition-colors">
               <MoreHorizontal size={16} className="text-[#1A1A1A]" />
             </button>

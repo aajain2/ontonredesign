@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, ChevronDown, Check } from 'lucide-react'
+import { Plus, ChevronDown, Check, X } from 'lucide-react'
 import { mockSurfaces } from '../data/mockData'
+import { useCollections } from '../context/CollectionContext'
 import NewClusterModal from './NewClusterModal'
 
 const allCollections = mockSurfaces.map((s) => ({
@@ -12,9 +13,10 @@ const allCollections = mockSurfaces.map((s) => ({
 }))
 
 // ── Floating collection picker (portaled to body) ──
-function CollectionPicker({ anchorRect, onClose }) {
+function CollectionPicker({ anchorRect, onClose, productId, collectionName }) {
   const ref = useRef(null)
   const navigate = useNavigate()
+  const { addToCollection, removeFromCollection } = useCollections()
   const [searchQuery, setSearchQuery] = useState('')
   const [addedToIds, setAddedToIds] = useState(new Set())
   const [profileAdded, setProfileAdded] = useState(false)
@@ -47,11 +49,16 @@ function CollectionPicker({ anchorRect, onClose }) {
   const toggleCollection = useCallback((sid) => {
     setAddedToIds((prev) => {
       const next = new Set(prev)
-      if (next.has(sid)) next.delete(sid)
-      else next.add(sid)
+      if (next.has(sid)) {
+        next.delete(sid)
+        if (productId) removeFromCollection(sid, productId)
+      } else {
+        next.add(sid)
+        if (productId) addToCollection(sid, productId)
+      }
       return next
     })
-  }, [])
+  }, [productId, addToCollection, removeFromCollection])
 
   const filtered = searchQuery
     ? allCollections.filter((c) => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -209,7 +216,7 @@ function CollectionPicker({ anchorRect, onClose }) {
         {/* Bottom bar */}
         <div className="flex items-center justify-between bg-[#6B6B6B] px-5 py-3.5 rounded-b-2xl">
           <button className="flex items-center gap-1.5 text-white text-[14px] font-semibold">
-            Profile (Public)
+            {collectionName || 'Profile (Public)'}
             <ChevronDown size={14} className="text-white/60" />
           </button>
           <button
@@ -226,7 +233,7 @@ function CollectionPicker({ anchorRect, onClose }) {
 }
 
 // ── Product Card ──
-export default memo(function ProductCard({ product, showInfo, priority }) {
+export default memo(function ProductCard({ product, showInfo, priority, onRemove, collectionName }) {
   const { id, title, gradient, image, aspectRatio, retailer, price } = product
   const [saved, setSaved] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
@@ -269,22 +276,32 @@ export default memo(function ProductCard({ product, showInfo, priority }) {
               className="absolute top-3 left-3 flex items-center gap-1 text-white text-[13px] font-semibold drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
               onClick={openPanel}
             >
-              Profile (Public)
+              {collectionName || 'Profile (Public)'}
               <ChevronDown size={14} />
             </button>
 
-            {/* Top-right: + / ✓ */}
-            <button
-              className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 ${
-                saved ? 'bg-[#555]' : 'bg-white hover:scale-105'
-              }`}
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSaved(!saved) }}
-            >
-              {saved
-                ? <Check size={18} strokeWidth={2.5} className="text-white" />
-                : <Plus size={18} strokeWidth={2.2} className="text-[#1A1A1A]" />
-              }
-            </button>
+            {/* Top-right: + / ✓ / × */}
+            {onRemove ? (
+              <button
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 hover:bg-white shadow-sm"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(id) }}
+                title="Remove"
+              >
+                <X size={14} strokeWidth={2.5} className="text-[#1A1A1A]" />
+              </button>
+            ) : (
+              <button
+                className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 ${
+                  saved ? 'bg-[#555]' : 'bg-white hover:scale-105'
+                }`}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSaved(!saved) }}
+              >
+                {saved
+                  ? <Check size={18} strokeWidth={2.5} className="text-white" />
+                  : <Plus size={18} strokeWidth={2.2} className="text-[#1A1A1A]" />
+                }
+              </button>
+            )}
 
             {/* Bottom-right: source domain */}
             <div className="absolute bottom-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 max-w-[calc(100%-60px)]">
@@ -320,6 +337,8 @@ export default memo(function ProductCard({ product, showInfo, priority }) {
         <CollectionPicker
           anchorRect={anchorRect}
           onClose={() => setShowPanel(false)}
+          productId={id}
+          collectionName={collectionName}
         />
       )}
     </>

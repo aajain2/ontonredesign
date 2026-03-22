@@ -36,7 +36,7 @@ function LibraryDropdown({ onClose }) {
     <div ref={ref} className="absolute top-full right-0 mt-2 w-[300px] bg-[#F0EEEA] rounded-2xl shadow-xl border border-[#E5E2DD] py-3 z-50">
       {/* All Products */}
       <Link
-        to="/search?q="
+        to="/profile?tab=elements"
         onClick={onClose}
         className="flex items-center gap-3 px-5 py-2.5 hover:bg-[#E5E2DD] transition-colors"
       >
@@ -54,7 +54,7 @@ function LibraryDropdown({ onClose }) {
       {libraryDreamboards.slice(0, 4).map((board) => (
         <Link
           key={board.id}
-          to="#"
+          to={`/profile?tab=collections&surface=${board.id}`}
           onClick={onClose}
           className="flex items-center gap-3 px-5 py-2.5 hover:bg-[#E5E2DD] transition-colors"
         >
@@ -62,7 +62,7 @@ function LibraryDropdown({ onClose }) {
             className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden"
             style={{
               background: board.thumbnails.length > 0
-                ? board.thumbnails[0]
+                ? `url(${board.thumbnails[0]}) center/cover no-repeat`
                 : board.canvasColor || 'linear-gradient(135deg, #E5E2DD, #D5D2CD)',
             }}
           />
@@ -75,7 +75,7 @@ function LibraryDropdown({ onClose }) {
 
       {/* All Dreamboards */}
       <Link
-        to="#"
+        to="/profile?tab=collections"
         onClick={onClose}
         className="flex items-center gap-3 px-5 py-2.5 hover:bg-[#E5E2DD] transition-colors"
       >
@@ -93,7 +93,7 @@ function LibraryDropdown({ onClose }) {
 
       {/* All Rooms */}
       <Link
-        to="#"
+        to="/profile?tab=collections"
         onClick={onClose}
         className="flex items-center gap-3 px-5 py-2.5 hover:bg-[#E5E2DD] transition-colors"
       >

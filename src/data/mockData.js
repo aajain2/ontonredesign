@@ -161,6 +161,8 @@ export const mockSurfaces = [
     thumbnails: [],
     canvasColor: 'linear-gradient(135deg, #C4A87C 0%, #A08860 100%)',
     coverImage: '/images/aayush-room.jpg',
+    coverImageAlt: '/images/aayush-room-with-art.png',
+    keyProductId: 13,
     productIds: [6, 9, 15, 22, 34],
   },
 ];

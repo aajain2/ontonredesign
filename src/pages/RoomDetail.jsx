@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react'
 import { ChevronLeft, MoreHorizontal, Plus, Check, X } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
 import { mockRoomImages, mockSurfaces, mockProducts } from '../data/mockData'
+import { useCollections } from '../context/CollectionContext'
 
 // Deterministically pick products for a room based on its ID
 function getProductsForRoom(roomId) {
@@ -45,9 +46,6 @@ export default function RoomDetail() {
   const [saved, setSaved] = useState(false)
   const [removedIds, setRemovedIds] = useState([])
 
-  const handleRemoveProduct = useCallback((productId) => {
-    setRemovedIds((prev) => [...prev, productId])
-  }, [])
 
   if (!room) {
     return (
@@ -57,15 +55,36 @@ export default function RoomDetail() {
     )
   }
 
+  // Dynamic cover: swap when key product is added via collection picker,
+  // or when an originally-included key product is removed
+  const { isInCollection, removeFromCollection } = useCollections()
+  const keyAdded = surface?.keyProductId && isInCollection(surface.id, surface.keyProductId)
+  const keyOriginallyInRoom = surface?.keyProductId && surface.productIds?.includes(surface.keyProductId)
+  const keyRemoved = keyOriginallyInRoom && removedIds.includes(surface.keyProductId)
+
   // Use productIds from surface if available, otherwise fallback
-  const allProducts = surface?.productIds
+  const baseProducts = surface?.productIds
     ? surface.productIds.map((pid) => mockProducts.find((p) => p.id === pid)).filter(Boolean)
     : getProductsForRoom(room.id)
+
+  // Include the key product in the list when added via collection picker
+  let allProducts = baseProducts
+  if (keyAdded && surface?.keyProductId) {
+    const keyProduct = mockProducts.find((p) => p.id === surface.keyProductId)
+    if (keyProduct && !baseProducts.some((p) => p.id === keyProduct.id)) {
+      allProducts = [keyProduct, ...baseProducts]
+    }
+  }
   const products = allProducts.filter((p) => !removedIds.includes(p.id))
 
-  // Dynamic cover: if key product is removed, show alt cover
-  const keyRemoved = surface?.keyProductId && removedIds.includes(surface.keyProductId)
-  const currentCover = keyRemoved && surface?.coverImageAlt
+  // Handle removing the key product — also clear it from the collection context
+  const handleRemoveProductWithContext = useCallback((productId) => {
+    setRemovedIds((prev) => [...prev, productId])
+    if (surface?.keyProductId === productId) {
+      removeFromCollection(surface.id, productId)
+    }
+  }, [surface, removeFromCollection])
+  const currentCover = (keyRemoved || keyAdded) && surface?.coverImageAlt
     ? surface.coverImageAlt
     : room.image
   const followerCount = 120 + (room.id * 13) % 5000
@@ -145,19 +164,12 @@ export default function RoomDetail() {
           </h2>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-[16px]">
-          {products.map((product) => (
-            <div key={product.id} className="w-[calc(33.333%-12px)] max-w-[280px] min-w-[200px] relative group/card">
-              <ProductCard product={product} />
-              <button
-                onClick={() => handleRemoveProduct(product.id)}
-                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-black/70 z-10"
-                title="Remove from this room"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
+        <div className="text-center">
+          <div className="inline-block text-left columns-2 sm:columns-3 gap-[16px]">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} onRemove={handleRemoveProductWithContext} collectionName={room.room || room.title} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
