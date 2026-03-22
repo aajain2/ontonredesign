@@ -7,13 +7,14 @@ export default function RoomCard({ room }) {
   return (
     <Link to={`/room/${room.id}`} className="group block mb-[16px] break-inside-avoid cursor-pointer">
       <div className="relative rounded-[4px] overflow-hidden">
-        <img
-          src={image}
-          alt={room.room}
-          className="w-full object-cover"
-          style={{ aspectRatio: aspectRatio || '4/5' }}
-          loading="lazy"
-        />
+        <div style={{ aspectRatio: aspectRatio || '4/5' }} className="w-full bg-[#EEEDEB]">
+          <img
+            src={image}
+            alt={room.room}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
 
         {/* Hover: connect button */}
         <button

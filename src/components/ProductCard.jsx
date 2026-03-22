@@ -258,11 +258,14 @@ export default memo(function ProductCard({ product, showInfo, priority, onRemove
     <>
       <Link to={`/product/${id}`} className="group block mb-[16px] break-inside-avoid">
         <div ref={cardRef} className="relative rounded-[4px] overflow-hidden">
-          {image ? (
-            <img src={image} alt={title} className="w-full object-cover" style={imageStyle} loading={priority ? 'eager' : 'lazy'} decoding={priority ? 'sync' : 'async'} fetchPriority={priority ? 'high' : 'auto'} />
-          ) : (
-            <div className="w-full" style={gradientStyle} />
-          )}
+          {/* Aspect-ratio container prevents reflow when images load */}
+          <div style={{ aspectRatio: aspectRatio || '1/1' }} className="w-full bg-[#EEEDEB]">
+            {image ? (
+              <img src={image} alt={title} className="w-full h-full object-cover" loading={priority ? 'eager' : 'lazy'} decoding={priority ? 'sync' : 'async'} fetchPriority={priority ? 'high' : 'auto'} />
+            ) : (
+              <div className="w-full h-full" style={{ background: gradient }} />
+            )}
+          </div>
 
           {/* Hover overlay */}
           <>
